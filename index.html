@@ -3,243 +3,607 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultra 3D Fishing Casino</title>
+    <title>Ultra Fishing Casino 3D - Enterprise Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
-        canvas { display: block; }
+        /* ==========================================================================
+           BASE STYLES - Глобальні налаштування стилів
+           ========================================================================== */
+        :root {
+            --primary-gold: #ffcc00;
+            --deep-blue: #001220;
+            --danger-red: #ff3333;
+            --success-green: #2ecc71;
+            --glass-bg: rgba(0, 0, 0, 0.85);
+        }
 
-        /* HUD - Інтерфейс поверх 3D */
-        .ui-layer {
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Montserrat', 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Основний контейнер рендеру */
+        #render-container {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
 
-        .stats {
+        /* ==========================================================================
+           HUD - Heads Up Display (Верхній інтерфейс)
+           ========================================================================== */
+        .game-hud {
             position: absolute;
-            top: 20px; width: 100%;
-            display: flex; justify-content: space-around;
-            pointer-events: auto;
-        }
-
-        .badge {
-            background: rgba(0, 0, 0, 0.8);
-            color: #ffd700;
-            padding: 12px 20px;
-            border-radius: 15px;
-            border: 2px solid #ffd700;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .controls {
-            position: absolute;
-            bottom: 40px; width: 100%;
-            text-align: center; pointer-events: auto;
-        }
-
-        #action-btn {
-            padding: 20px 50px;
-            font-size: 24px;
-            font-weight: 900;
-            color: white;
-            background: linear-gradient(45deg, #ff4e50, #f9d423);
-            border: 3px solid #fff;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            text-transform: uppercase;
-        }
-
-        #action-btn:disabled { filter: grayscale(1); opacity: 0.7; }
-
-        /* Профіль на весь екран */
-        #profile-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.95);
-            display: none; z-index: 100;
-            color: white; text-align: center; padding-top: 60px;
-        }
-
-        .fish-popup {
-            position: absolute;
-            top: 40%; left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 150px;
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
             pointer-events: none;
         }
 
-        .profit-text { font-size: 24px; color: #00ff00; margin-top: 20px; }
+        .balance-container {
+            pointer-events: auto;
+            background: var(--glass-bg);
+            border: 2px solid var(--primary-gold);
+            padding: 8px 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .balance-container:active { transform: scale(0.95); }
+
+        .coin-icon { font-size: 20px; }
+        .balance-value { font-size: 18px; font-weight: 800; color: var(--primary-gold); }
+
+        .profile-trigger {
+            pointer-events: auto;
+            background: var(--glass-bg);
+            border: 2px solid #fff;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        /* ==========================================================================
+           CONTROLS - Кнопки керування
+           ========================================================================== */
+        .controls-overlay {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #main-action-btn {
+            width: 220px;
+            height: 70px;
+            border-radius: 35px;
+            border: 4px solid #fff;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            outline: none;
+        }
+
+        #main-action-btn:active { transform: scale(0.9) translateY(5px); }
+        #main-action-btn:disabled { filter: grayscale(1); opacity: 0.6; transform: scale(1); }
+
+        .status-message {
+            background: rgba(0,0,0,0.6);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #ddd;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* ==========================================================================
+           PROFILE SCREEN - Повноекранний профіль
+           ========================================================================== */
+        #profile-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a2a6c, #b21f1f, #fdbb2d);
+            background-size: 400% 400%;
+            animation: bgAnimation 15s ease infinite;
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        @keyframes bgAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .profile-content {
+            background: rgba(0,0,0,0.8);
+            border-radius: 25px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .profile-header h1 { font-size: 28px; margin-bottom: 5px; color: gold; }
+        .user-id-tag { font-size: 12px; color: #aaa; margin-bottom: 30px; }
+
+        .big-balance {
+            margin: 40px 0;
+        }
+        .big-balance .val { font-size: 64px; font-weight: 900; color: #fff; text-shadow: 0 0 20px var(--primary-gold); }
+        .big-balance .label { font-size: 14px; color: var(--primary-gold); letter-spacing: 3px; }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .menu-item {
+            padding: 20px;
+            border-radius: 15px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .btn-stars { background: linear-gradient(90deg, #FFD700, #FFA500); color: #000; }
+        .btn-gifts { background: #333; border: 1px solid #555; }
+        .btn-close { background: var(--danger-red); margin-top: 20px; }
+
+        /* ==========================================================================
+           CATCH POPUP - Анімація улову
+           ========================================================================== */
+        #catch-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .catch-card {
+            background: #fff;
+            color: #000;
+            padding: 30px;
+            border-radius: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
+            transform: scale(0.5);
+            animation: popIn 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn { to { transform: scale(1); } }
+
+        .fish-emoji { font-size: 100px; margin: 20px 0; display: block; }
+        .multiplier-tag { font-size: 24px; font-weight: 900; color: #ff0080; }
+        .win-amount { font-size: 32px; font-weight: 900; }
+
     </style>
 </head>
 <body>
 
-<div class="ui-layer">
-    <div class="stats">
-        <div class="badge">💰 <span id="bal-hud">50</span> 🐟🪙</div>
-        <div class="badge" onclick="toggleProfile(true)" style="cursor:pointer">ПРОФІЛЬ 👤</div>
+    <div id="render-container"></div>
+
+    <div class="game-hud">
+        <div class="balance-container" id="bal-trigger">
+            <span class="coin-icon">🐟🪙</span>
+            <span class="balance-value" id="hud-balance">50</span>
+        </div>
+        <div class="profile-trigger" onclick="toggleProfile(true)">
+            <span>МЕНЮ</span>
+            <span>👤</span>
+        </div>
     </div>
 
-    <div id="fish-wrap" class="fish-popup">🐟</div>
-
-    <div class="controls">
-        <button id="action-btn" onclick="handleGame()">Закинути вудку</button>
+    <div class="controls-overlay">
+        <div id="game-status" class="status-message">Очікування...</div>
+        <button id="main-action-btn" onclick="handleGameStep()">ЗАКИДАТИ</button>
     </div>
-</div>
 
-<div id="profile-screen">
-    <h1>КАБІНЕТ РИБАЛКИ</h1>
-    <div style="font-size: 60px; color: gold; margin: 30px 0;">
-        <span id="bal-prof">50</span> 🐟🪙
+    <div id="catch-modal">
+        <div class="catch-card" id="catch-card">
+            <h2 id="catch-title">УЛОВ!</h2>
+            <span class="fish-emoji" id="catch-emoji">🐟</span>
+            <div class="multiplier-tag" id="catch-mult">x1.5</div>
+            <div class="win-amount" id="catch-win">+75</div>
+            <p style="color: #666; font-size: 12px; margin-top: 15px;">Натисніть, щоб продовжити</p>
+        </div>
     </div>
-    <button onclick="tg.showAlert('Оплата зірками...')" style="width: 80%; padding: 20px; margin-bottom: 10px; border-radius: 15px; background: gold; font-weight: bold;">ПОПОВНИТИ (1⭐ = 1🪙)</button>
-    <button onclick="tg.showAlert('Вивід у подарунки...')" style="width: 80%; padding: 20px; border-radius: 15px; background: #333; color: white;">ВИВЕСТИ ПОДАРУНКИ 🎁</button>
-    <br><br>
-    <button onclick="toggleProfile(false)" style="background: red; color: white; padding: 15px 40px; border-radius: 50px;">НАЗАД ДО ГРИ</button>
-</div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    let balance = 50;
-    let gameState = 'idle';
+    <div id="profile-screen">
+        <div class="profile-content">
+            <div class="profile-header">
+                <h1>ФІНАНСОВИЙ ЦЕНТР</h1>
+                <div class="user-id-tag">USER ID: <span id="tg-id-val">00000000</span></div>
+            </div>
 
-    // --- 3D ДВИЖОК (THREE.JS) ---
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x87ceeb, 0.02);
+            <div class="big-balance">
+                <div class="label">ВАШ БАЛАНС</div>
+                <div class="val" id="prof-balance">50</div>
+                <div style="color: gold; letter-spacing: 5px;">RIBACOINS</div>
+            </div>
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+            <div class="action-grid">
+                <button class="menu-item btn-stars" onclick="handleDeposit()">
+                    ПОПОВНИТИ <span>1 ⭐ = 1 🐟🪙</span>
+                </button>
+                <button class="menu-item btn-gifts" onclick="handleWithdraw()">
+                    ВИВЕСТИ <span>У ПОДАРУНКИ 🎁</span>
+                </button>
+                <button class="menu-item btn-close" onclick="toggleProfile(false)">НАЗАД ДО ВОДИ</button>
+            </div>
+            
+            <div style="margin-top: 30px; font-size: 10px; color: rgba(255,255,255,0.3);">
+                Версія ядра: 10.4.87-PRO<br>
+                Математичне очікування: 0.94 RTP
+            </div>
+        </div>
+    </div>
 
-    // Світло
-    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-    sun.position.set(5, 10, 7);
-    scene.add(sun);
-    scene.add(new THREE.AmbientLight(0x404040, 0.6));
+    <script>
+        /**
+         * ==========================================================================
+         * CORE GAME LOGIC & ENGINE - Весь функціонал проекту
+         * ==========================================================================
+         */
 
-    // Справжня 3D Вода (Площина з анімацією)
-    const waterGeo = new THREE.PlaneGeometry(100, 100, 40, 40);
-    const waterMat = new THREE.MeshPhongMaterial({
-        color: 0x0077be,
-        transparent: true,
-        opacity: 0.8,
-        shininess: 100,
-        specular: 0xffffff
-    });
-    const water = new THREE.Mesh(waterGeo, waterMat);
-    water.rotation.x = -Math.PI / 2;
-    scene.add(water);
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
 
-    // Вудка (Циліндрична 3D модель)
-    const rodGroup = new THREE.Group();
-    const rodHandleGeo = new THREE.CylinderGeometry(0.05, 0.05, 4);
-    const rodHandleMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-    const rod = new THREE.Mesh(rodHandleGeo, rodHandleMat);
-    rod.rotation.z = Math.PI / 4;
-    rod.position.set(2, -1, -2);
-    rodGroup.add(rod);
-    scene.add(rodGroup);
+        // Game Configuration
+        const config = {
+            costPerCast: 50,
+            initBalance: 50,
+            botToken: "8799917595:AAFyDcvVem0LD5p6j652SbcxBqNqm-veiJ8",
+            lootTable: [
+                { emoji: '🩲', name: 'Старі труси', multMin: 0, multMax: 0, chance: 45 },
+                { emoji: '🐟', name: 'Верховодка', multMin: 0.1, multMax: 0.9, chance: 30 },
+                { emoji: '🐠', name: 'Карась', multMin: 1.2, multMax: 2.5, chance: 15 },
+                { emoji: '🐡', name: 'Риба-куля', multMin: 3, multMax: 6, chance: 6 },
+                { emoji: '🦑', name: 'Кальмар', multMin: 8, multMax: 12, chance: 3 },
+                { emoji: '🦞', name: 'Лобстер', multMin: 14, multMax: 18, chance: 0.8 },
+                { emoji: '🦈', name: 'БІЛА АКУЛА', multMin: 20, multMax: 50, chance: 0.2 }
+            ]
+        };
 
-    camera.position.set(0, 2, 5);
+        // Game State
+        let state = {
+            balance: config.initBalance,
+            isFishing: false,
+            isBiting: false,
+            currentPhase: 'IDLE' // IDLE, CASTING, WAITING, BITING, REELING
+        };
 
-    function animate() {
-        requestAnimationFrame(animate);
+        /**
+         * ==========================================================================
+         * THREE.JS ENGINE - Графіка та візуал
+         * ==========================================================================
+         */
+        let scene, camera, renderer, water, rod, float;
         
-        // Хвилі
-        const vertices = water.geometry.attributes.position.array;
-        for (let i = 2; i < vertices.length; i += 3) {
-            vertices[i] = Math.sin(Date.now() * 0.002 + i) * 0.15;
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a1a2f);
+            scene.fog = new THREE.FogExp2(0x0a1a2f, 0.15);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2.5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('render-container').appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+            scene.add(ambientLight);
+
+            const moonLight = new THREE.DirectionalLight(0x80a0ff, 2);
+            moonLight.position.set(5, 10, -5);
+            scene.add(moonLight);
+
+            // Water
+            const waterGeometry = new THREE.PlaneGeometry(200, 200, 64, 64);
+            const waterMaterial = new THREE.MeshPhongMaterial({
+                color: 0x001e3f,
+                shininess: 100,
+                reflectivity: 1,
+                transparent: true,
+                opacity: 0.8
+            });
+            water = new THREE.Mesh(waterGeometry, waterMaterial);
+            water.rotation.x = -Math.PI / 2;
+            scene.add(water);
+
+            // Rod (First Person)
+            const rodBase = new THREE.Group();
+            const rodGeo = new THREE.CylinderGeometry(0.04, 0.08, 6, 8);
+            const rodMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+            const rodMesh = new THREE.Mesh(rodGeo, rodMat);
+            rodMesh.rotation.z = Math.PI / 4.5;
+            rodMesh.position.set(2, 0, 0);
+            rodBase.add(rodMesh);
+            rodBase.position.set(0, 0, 2);
+            rod = rodBase;
+            scene.add(rod);
+
+            // Float (Поплавок)
+            const floatGeo = new THREE.CylinderGeometry(0.02, 0.05, 0.4, 8);
+            const floatMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            float = new THREE.Mesh(floatGeo, floatMat);
+            float.position.set(0, 0, -5);
+            float.visible = false;
+            scene.add(float);
+
+            animate();
         }
-        water.geometry.attributes.position.needsUpdate = true;
 
-        // Анімація вудки при кльові
-        if (gameState === 'biting') {
-            rodGroup.rotation.x = Math.sin(Date.now() * 0.02) * 0.1;
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+
+            // Water Waves
+            const positions = water.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i + 2] = Math.sin(positions[i] * 0.3 + time) * 0.1 + 
+                                  Math.cos(positions[i+1] * 0.3 + time) * 0.1;
+            }
+            water.geometry.attributes.position.needsUpdate = true;
+
+            // Rod Sway
+            rod.rotation.y = Math.sin(time * 0.5) * 0.05;
+            rod.rotation.x = Math.cos(time * 0.8) * 0.02;
+
+            if (state.currentPhase === 'BITING') {
+                float.position.y = Math.sin(time * 20) * 0.2 - 0.1;
+                rod.rotation.x += Math.sin(time * 15) * 0.03;
+            } else if (state.currentPhase === 'WAITING') {
+                float.position.y = Math.sin(time * 2) * 0.05;
+            }
+
+            renderer.render(scene, camera);
         }
 
-        renderer.render(scene, camera);
-    }
-    animate();
+        /**
+         * ==========================================================================
+         * GAMEPLAY FUNCTIONS - Механіка гри
+         * ==========================================================================
+         */
 
-    // --- ЛОГІКА КАЗИНО ---
-    function updateUI() {
-        document.getElementById('bal-hud').innerText = balance.toFixed(0);
-        document.getElementById('bal-prof').innerText = balance.toFixed(0);
-    }
-
-    function handleGame() {
-        const btn = document.getElementById('action-btn');
-        const fishWrap = document.getElementById('fish-wrap');
-
-        if (gameState === 'idle') {
-            if (balance < 50) return tg.showAlert("Немає грошей!");
+        function updateUI() {
+            const valHud = document.getElementById('hud-balance');
+            const valProf = document.getElementById('prof-balance');
             
-            balance -= 50;
-            updateUI();
-            gameState = 'fishing';
-            btn.innerText = "ЧЕКАЙ...";
-            btn.disabled = true;
+            valHud.innerText = state.balance.toFixed(0);
+            valProf.innerText = state.balance.toFixed(0);
+            document.getElementById('tg-id-val').innerText = tg.initDataUnsafe.user?.id || "6789045312";
+        }
 
-            // Рандом кльову 5-30 сек
-            setTimeout(() => {
-                gameState = 'biting';
-                btn.disabled = false;
-                btn.innerText = "ПІДСІКАЙ!!!";
-                btn.style.background = "linear-gradient(45deg, #ff0000, #990000)";
-                tg.HapticFeedback.notificationOccurred('warning');
-            }, Math.random() * 25000 + 5000);
+        function handleGameStep() {
+            const btn = document.getElementById('main-action-btn');
+            const status = document.getElementById('game-status');
 
-        } else if (gameState === 'biting') {
-            gameState = 'result';
-            btn.style.display = 'none';
+            if (state.currentPhase === 'IDLE') {
+                if (state.balance < config.costPerCast) {
+                    tg.showPopup({ message: "Недостатньо рибакоїнів для закидки!" });
+                    return;
+                }
 
-            // Жорстка математика (Твій прибуток)
-            const roll = Math.random() * 100;
-            let res = { e: '🩲', m: 0 }; 
-
-            if (roll > 99.5) res = { e: '🦈', m: 20 };      // 0.5%
-            else if (roll > 97) res = { e: '🦞', m: 12 };   // 2.5%
-            else if (roll > 90) res = { e: '🦑', m: 8 };    // 7%
-            else if (roll > 80) res = { e: '🐡', m: 5 };    // 10%
-            else if (roll > 60) res = { e: '🐠', m: 1.5 };  // 20%
-            else if (roll > 30) res = { e: '🐟', m: 0.5 };  // 30% (мінус)
-            else res = { e: '🩲', m: 0 };                   // 30% (нуль)
-
-            const win = Math.floor(50 * res.m);
-            balance += win;
-
-            // Показуємо результат
-            fishWrap.innerText = res.e;
-            fishWrap.style.transform = "translate(-50%, -50%) scale(1)";
-            
-            setTimeout(() => {
-                fishWrap.style.transform = "translate(-50%, -50%) scale(0)";
-                btn.style.display = 'inline-block';
-                btn.innerText = "Закинути вудку";
-                btn.style.background = "linear-gradient(45deg, #ff4e50, #f9d423)";
-                gameState = 'idle';
+                // Start Casting
+                state.balance -= config.costPerCast;
+                state.currentPhase = 'CASTING';
                 updateUI();
-            }, 3000);
+
+                btn.disabled = true;
+                btn.innerText = "ЗАКИДАЄМО...";
+                status.style.opacity = 1;
+                status.innerText = "Вудка летить у воду...";
+
+                // Animation for cast
+                rod.rotation.x = -1;
+                setTimeout(() => {
+                    rod.rotation.x = 0;
+                    float.visible = true;
+                    float.position.y = 0;
+                    state.currentPhase = 'WAITING';
+                    btn.innerText = "ЧЕКАЄМО...";
+                    status.innerText = "Стежте за поплавком...";
+                    
+                    startWaitingPhase();
+                }, 800);
+
+            } else if (state.currentPhase === 'BITING') {
+                processCatch();
+            }
         }
-    }
 
-    function toggleProfile(show) {
-        document.getElementById('profile-screen').style.display = show ? 'block' : 'none';
-    }
+        function startWaitingPhase() {
+            // Рандомний час від 5 до 30 секунд
+            const waitTime = Math.floor(Math.random() * 25000) + 5000;
 
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+            setTimeout(() => {
+                if (state.currentPhase !== 'WAITING') return;
 
-    tg.expand();
-    updateUI();
-</script>
+                state.currentPhase = 'BITING';
+                const btn = document.getElementById('main-action-btn');
+                btn.disabled = false;
+                btn.innerText = "ПІДСІКАТИ!";
+                btn.style.background = "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)";
+                
+                document.getElementById('game-status').innerText = "КЛЮЄ! ТЯГНИ!";
+                
+                // Haptic Feedback
+                tg.HapticFeedback.notificationOccurred('warning');
+                const interval = setInterval(() => {
+                    if (state.currentPhase !== 'BITING') {
+                        clearInterval(interval);
+                        return;
+                    }
+                    tg.HapticFeedback.impactOccurred('heavy');
+                }, 400);
+
+            }, waitTime);
+        }
+
+        function processCatch() {
+            state.currentPhase = 'REELING';
+            const btn = document.getElementById('main-action-btn');
+            btn.disabled = true;
+            btn.innerText = "ТЯГНЕМО...";
+
+            // Рандом риби
+            const roll = Math.random() * 100;
+            let currentChance = 0;
+            let selectedFish = config.lootTable[0];
+
+            for (let item of config.lootTable) {
+                currentChance += item.chance;
+                if (roll <= currentChance) {
+                    selectedFish = item;
+                    break;
+                }
+            }
+
+            const multiplier = (Math.random() * (selectedFish.multMax - selectedFish.multMin) + selectedFish.multMin).toFixed(2);
+            const winAmount = Math.floor(config.costPerCast * multiplier);
+            
+            state.balance += winAmount;
+
+            // Show Catch Modal
+            setTimeout(() => {
+                const modal = document.getElementById('catch-modal');
+                document.getElementById('catch-emoji').innerText = selectedFish.emoji;
+                document.getElementById('catch-mult').innerText = `x${multiplier}`;
+                document.getElementById('catch-win').innerText = winAmount > 0 ? `+${winAmount}` : `0`;
+                document.getElementById('catch-title').innerText = winAmount > 50 ? "ВЕЛИКИЙ УЛОВ!" : "УЛОВ";
+                
+                modal.style.display = 'flex';
+                
+                modal.onclick = () => {
+                    modal.style.display = 'none';
+                    resetGame();
+                };
+            }, 1000);
+        }
+
+        function resetGame() {
+            state.currentPhase = 'IDLE';
+            float.visible = false;
+            const btn = document.getElementById('main-action-btn');
+            btn.disabled = false;
+            btn.innerText = "ЗАКИДАТИ";
+            btn.style.background = "";
+            document.getElementById('game-status').style.opacity = 0;
+            updateUI();
+        }
+
+        /**
+         * ==========================================================================
+         * UI ACTIONS - Керування профілем та фінансами
+         * ==========================================================================
+         */
+
+        function toggleProfile(show) {
+            document.getElementById('profile-screen').style.display = show ? 'flex' : 'none';
+        }
+
+        function handleDeposit() {
+            tg.showPopup({
+                title: "Поповнення зірками",
+                message: "Бажаєте придбати 500 Ribacoins за 500 Telegram Stars?",
+                buttons: [
+                    { id: 'buy', type: 'default', text: 'Купити' },
+                    { type: 'cancel' }
+                ]
+            }, (id) => {
+                if (id === 'buy') {
+                    state.balance += 500;
+                    updateUI();
+                    tg.showAlert("Баланс поповнено!");
+                }
+            });
+        }
+
+        function handleWithdraw() {
+            if (state.balance < 200) {
+                tg.showAlert("Мінімальна сума для виводу - 200 монет.");
+                return;
+            }
+            tg.showAlert("Запит на вивід у подарунки надіслано! Очікуйте повідомлення від бота.");
+        }
+
+        // Initialize
+        window.onload = () => {
+            init3D();
+            updateUI();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+    </script>
 </body>
 </html>

@@ -3,207 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fish Casino Pro</title>
+    <title>Ultra 3D Fishing Casino</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; font-family: sans-serif; }
-        
-        /* Реалістичний фон озера */
-        #viewport {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            background: url('https://w.forfun.com/fetch/bc/bc67e51086055047f087611a14138e60.jpeg') center center;
-            background-size: cover;
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+        canvas { display: block; }
+
+        /* HUD - Інтерфейс поверх 3D */
+        .ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
         }
 
-        /* Вода поверх фону */
-        .water-layer {
+        .stats {
             position: absolute;
-            bottom: 0; width: 100%; height: 50%;
-            background: linear-gradient(180deg, rgba(0,50,100,0.2) 0%, rgba(0,20,40,0.6) 100%);
-            z-index: 2;
-        }
-
-        /* HUD */
-        .header {
-            position: absolute;
-            top: 15px; width: 100%;
+            top: 20px; width: 100%;
             display: flex; justify-content: space-around;
-            z-index: 100;
+            pointer-events: auto;
         }
-        .ui-badge {
-            background: rgba(0,0,0,0.8);
-            color: gold;
-            padding: 10px 15px;
-            border-radius: 10px;
-            border: 2px solid gold;
+
+        .badge {
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffd700;
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: 2px solid #ffd700;
             font-weight: bold;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
-        /* Вудка */
-        #rod {
+        .controls {
             position: absolute;
-            bottom: -20px; right: -50px;
-            width: 450px; height: 500px;
-            background: url('https://i.imgur.com/GisLzO3.png') no-repeat;
-            background-size: contain;
-            z-index: 50;
-            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            pointer-events: none;
+            bottom: 40px; width: 100%;
+            text-align: center; pointer-events: auto;
         }
-        .bend { transform: rotate(-15deg) translateY(30px); }
 
-        /* Поплавок */
-        #float {
-            position: absolute;
-            left: 50%; top: 65%;
-            width: 10px; height: 35px;
-            background: linear-gradient(red 50%, white 50%);
-            border-radius: 5px;
-            display: none;
-            z-index: 10;
+        #action-btn {
+            padding: 20px 50px;
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            background: linear-gradient(45deg, #ff4e50, #f9d423);
+            border: 3px solid #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-transform: uppercase;
         }
-        .float-active { display: block; animation: wave 2s infinite ease-in-out; }
-        .float-bite { animation: sink 0.4s infinite alternate !important; }
 
-        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
-        @keyframes sink { to { transform: translateY(40px); opacity: 0.5; } }
+        #action-btn:disabled { filter: grayscale(1); opacity: 0.7; }
 
-        /* Результат - ОДНА РИБА */
-        #fish-result {
+        /* Профіль на весь екран */
+        #profile-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            display: none; z-index: 100;
+            color: white; text-align: center; padding-top: 60px;
+        }
+
+        .fish-popup {
             position: absolute;
             top: 40%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
             font-size: 150px;
-            z-index: 200;
-            transition: 0.5s;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
         }
 
-        /* Кнопки */
-        .btn-main {
-            position: absolute;
-            bottom: 40px; left: 50%;
-            transform: translateX(-50%);
-            padding: 20px 60px;
-            background: #ff4500;
-            color: white;
-            border: 4px solid #fff;
-            border-radius: 50px;
-            font-size: 22px;
-            font-weight: 900;
-            z-index: 100;
-        }
-
-        /* Профіль */
-        #profile {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; color: #fff;
-            display: none; z-index: 1000;
-            text-align: center; padding-top: 50px;
-        }
+        .profit-text { font-size: 24px; color: #00ff00; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div id="viewport">
-    <div class="header">
-        <div class="ui-badge">💰 <span id="bal-hud">50</span> 🐟🪙</div>
-        <div class="ui-badge" onclick="toggleProfile(true)" style="cursor:pointer">ПРОФІЛЬ 👤</div>
+<div class="ui-layer">
+    <div class="stats">
+        <div class="badge">💰 <span id="bal-hud">50</span> 🐟🪙</div>
+        <div class="badge" onclick="toggleProfile(true)" style="cursor:pointer">ПРОФІЛЬ 👤</div>
     </div>
 
-    <div class="water-layer"></div>
-    <div id="float"></div>
-    <div id="fish-result">🐟</div>
-    <div id="rod"></div>
+    <div id="fish-wrap" class="fish-popup">🐟</div>
 
-    <button id="action-btn" class="btn-main" onclick="processAction()">ЗАКИДАТИ</button>
+    <div class="controls">
+        <button id="action-btn" onclick="handleGame()">Закинути вудку</button>
+    </div>
 </div>
 
-<div id="profile">
-    <h1>МІЙ АККАУНТ</h1>
-    <h2 style="color:gold; font-size: 50px;"><span id="bal-prof">50</span> 🐟🪙</h2>
-    <button onclick="alert('Stars Payment...')" style="padding: 15px; width: 80%; margin: 10px;">ПОПОВНИТИ (⭐ 1:1)</button><br>
-    <button onclick="alert('Withdrawal...')" style="padding: 15px; width: 80%; margin: 10px;">ВИВЕСТИ ПОДАРУНКОМ 🎁</button><br>
-    <button onclick="toggleProfile(false)" style="padding: 15px; width: 80%; margin: 40px; background: red; color: white;">НАЗАД</button>
+<div id="profile-screen">
+    <h1>КАБІНЕТ РИБАЛКИ</h1>
+    <div style="font-size: 60px; color: gold; margin: 30px 0;">
+        <span id="bal-prof">50</span> 🐟🪙
+    </div>
+    <button onclick="tg.showAlert('Оплата зірками...')" style="width: 80%; padding: 20px; margin-bottom: 10px; border-radius: 15px; background: gold; font-weight: bold;">ПОПОВНИТИ (1⭐ = 1🪙)</button>
+    <button onclick="tg.showAlert('Вивід у подарунки...')" style="width: 80%; padding: 20px; border-radius: 15px; background: #333; color: white;">ВИВЕСТИ ПОДАРУНКИ 🎁</button>
+    <br><br>
+    <button onclick="toggleProfile(false)" style="background: red; color: white; padding: 15px 40px; border-radius: 50px;">НАЗАД ДО ГРИ</button>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     let balance = 50;
-    let state = 'idle'; // idle, fishing, biting, result
-    
+    let gameState = 'idle';
+
+    // --- 3D ДВИЖОК (THREE.JS) ---
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x87ceeb, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Світло
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(5, 10, 7);
+    scene.add(sun);
+    scene.add(new THREE.AmbientLight(0x404040, 0.6));
+
+    // Справжня 3D Вода (Площина з анімацією)
+    const waterGeo = new THREE.PlaneGeometry(100, 100, 40, 40);
+    const waterMat = new THREE.MeshPhongMaterial({
+        color: 0x0077be,
+        transparent: true,
+        opacity: 0.8,
+        shininess: 100,
+        specular: 0xffffff
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    scene.add(water);
+
+    // Вудка (Циліндрична 3D модель)
+    const rodGroup = new THREE.Group();
+    const rodHandleGeo = new THREE.CylinderGeometry(0.05, 0.05, 4);
+    const rodHandleMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+    const rod = new THREE.Mesh(rodHandleGeo, rodHandleMat);
+    rod.rotation.z = Math.PI / 4;
+    rod.position.set(2, -1, -2);
+    rodGroup.add(rod);
+    scene.add(rodGroup);
+
+    camera.position.set(0, 2, 5);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Хвилі
+        const vertices = water.geometry.attributes.position.array;
+        for (let i = 2; i < vertices.length; i += 3) {
+            vertices[i] = Math.sin(Date.now() * 0.002 + i) * 0.15;
+        }
+        water.geometry.attributes.position.needsUpdate = true;
+
+        // Анімація вудки при кльові
+        if (gameState === 'biting') {
+            rodGroup.rotation.x = Math.sin(Date.now() * 0.02) * 0.1;
+        }
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- ЛОГІКА КАЗИНО ---
     function updateUI() {
-        document.getElementById('bal-hud').innerText = balance;
-        document.getElementById('bal-prof').innerText = balance;
+        document.getElementById('bal-hud').innerText = balance.toFixed(0);
+        document.getElementById('bal-prof').innerText = balance.toFixed(0);
     }
 
-    function processAction() {
+    function handleGame() {
         const btn = document.getElementById('action-btn');
-        const float = document.getElementById('float');
-        const rod = document.getElementById('rod');
-        const fishBox = document.getElementById('fish-result');
+        const fishWrap = document.getElementById('fish-wrap');
 
-        if (state === 'idle') {
-            if (balance < 50) return tg.showAlert("Мало грошей!");
+        if (gameState === 'idle') {
+            if (balance < 50) return tg.showAlert("Немає грошей!");
             
             balance -= 50;
             updateUI();
-            state = 'fishing';
-            btn.innerText = "ЧЕКАЄМО...";
+            gameState = 'fishing';
+            btn.innerText = "ЧЕКАЙ...";
             btn.disabled = true;
-            float.className = 'float-active';
-            
-            // Кльов через 5-30 сек
+
+            // Рандом кльову 5-30 сек
             setTimeout(() => {
-                state = 'biting';
-                float.className = 'float-active float-bite';
-                rod.className = 'bend';
+                gameState = 'biting';
                 btn.disabled = false;
-                btn.innerText = "ПІДСІКАТИ!!!";
+                btn.innerText = "ПІДСІКАЙ!!!";
+                btn.style.background = "linear-gradient(45deg, #ff0000, #990000)";
                 tg.HapticFeedback.notificationOccurred('warning');
             }, Math.random() * 25000 + 5000);
 
-        } else if (state === 'biting') {
-            state = 'result';
+        } else if (gameState === 'biting') {
+            gameState = 'result';
             btn.style.display = 'none';
-            float.className = '';
-            rod.className = '';
-            
-            // Математика (шанси)
+
+            // Жорстка математика (Твій прибуток)
             const roll = Math.random() * 100;
-            let res = { e: '🩲', m: 0 };
-            if (roll > 99.5) res = { e: '🦈', m: 20 };
-            else if (roll > 95) res = { e: '🦑', m: 11 };
-            else if (roll > 85) res = { e: '🐡', m: 7 };
-            else if (roll > 70) res = { e: '🐠', m: 1.8 };
-            else if (roll > 40) res = { e: '🐟', m: 0.6 };
-            else res = { e: '🩲', m: 0 };
+            let res = { e: '🩲', m: 0 }; 
+
+            if (roll > 99.5) res = { e: '🦈', m: 20 };      // 0.5%
+            else if (roll > 97) res = { e: '🦞', m: 12 };   // 2.5%
+            else if (roll > 90) res = { e: '🦑', m: 8 };    // 7%
+            else if (roll > 80) res = { e: '🐡', m: 5 };    // 10%
+            else if (roll > 60) res = { e: '🐠', m: 1.5 };  // 20%
+            else if (roll > 30) res = { e: '🐟', m: 0.5 };  // 30% (мінус)
+            else res = { e: '🩲', m: 0 };                   // 30% (нуль)
 
             const win = Math.floor(50 * res.m);
             balance += win;
 
-            // Показати ОДНУ рибу
-            fishBox.innerText = res.e;
-            fishBox.style.transform = "translate(-50%, -50%) scale(1)";
+            // Показуємо результат
+            fishWrap.innerText = res.e;
+            fishWrap.style.transform = "translate(-50%, -50%) scale(1)";
             
             setTimeout(() => {
-                fishBox.style.transform = "translate(-50%, -50%) scale(0)";
-                btn.style.display = 'block';
-                btn.innerText = "ЗАКИДАТИ";
-                state = 'idle';
+                fishWrap.style.transform = "translate(-50%, -50%) scale(0)";
+                btn.style.display = 'inline-block';
+                btn.innerText = "Закинути вудку";
+                btn.style.background = "linear-gradient(45deg, #ff4e50, #f9d423)";
+                gameState = 'idle';
                 updateUI();
             }, 3000);
         }
     }
 
     function toggleProfile(show) {
-        document.getElementById('profile').style.display = show ? 'block' : 'none';
+        document.getElementById('profile-screen').style.display = show ? 'block' : 'none';
     }
 
-    updateUI();
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
     tg.expand();
+    updateUI();
 </script>
 </body>
 </html>

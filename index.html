@@ -5,65 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fishing 4D Pro - Russian Casino</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
-        canvas { display: block; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #87CEEB; font-family: 'Segoe UI', Arial, sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
         
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
+        /* Улучшенный HUD */
         .hud { 
             position: absolute; top: 20px; left: 20px; 
-            background: rgba(255, 255, 255, 0.9);
-            color: #333; padding: 12px 25px; border-radius: 25px; 
+            background: rgba(255, 255, 255, 0.95);
+            color: #1a1a1a; padding: 15px 30px; border-radius: 50px; 
             border: 3px solid #FFD700; pointer-events: auto; cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            display: flex; align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: flex; align-items: center; z-index: 10;
         }
         
         .btn-main { 
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            padding: 25px 80px; font-size: 28px; font-weight: 900; color: white;
-            background: linear-gradient(#4CAF50, #2E7D32); border: none; border-radius: 60px;
-            box-shadow: 0 10px 0 #1B5E20, 0 20px 30px rgba(0,0,0,0.3); pointer-events: auto; cursor: pointer;
-            transition: all 0.1s; text-transform: uppercase;
+            padding: 25px 90px; font-size: 32px; font-weight: 900; color: white;
+            background: linear-gradient(to bottom, #4CAF50, #2E7D32); border: none; border-radius: 100px;
+            box-shadow: 0 12px 0 #1B5E20, 0 25px 40px rgba(0,0,0,0.4); pointer-events: auto; cursor: pointer;
+            transition: all 0.1s; text-transform: uppercase; letter-spacing: 2px;
         }
-        .btn-main:active:not(:disabled) { transform: translateX(-50%) translateY(5px); box-shadow: 0 5px 0 #1B5E20; }
-        .btn-main:disabled { background: #888; box-shadow: 0 10px 0 #555; }
+        .btn-main:active:not(:disabled) { transform: translateX(-50%) translateY(8px); box-shadow: 0 4px 0 #1B5E20; }
+        .btn-main:disabled { background: #555; box-shadow: 0 10px 0 #333; opacity: 0.7; }
 
-        /* Прогресс-бар ловли */
+        /* Прогресс-бар слева (чтобы не мешать катушке) */
         #reel-zone {
-            position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
-            width: 80px; height: 300px; background: rgba(0,0,0,0.3);
-            border-radius: 40px; border: 3px solid white; display: none; pointer-events: auto;
+            position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 350px; background: rgba(0,0,0,0.5);
+            border-radius: 20px; border: 4px solid #FFD700; display: none; pointer-events: none; overflow: hidden;
         }
         #reel-progress {
-            position: absolute; bottom: 0; width: 100%; background: linear-gradient(#40ff00, #008000);
-            border-radius: 40px; transition: height 0.1s; height: 0%;
+            position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #FFD700, #40ff00);
+            transition: height 0.15s cubic-bezier(0.17, 0.67, 0.83, 0.67); height: 0%;
+        }
+
+        /* Центральная интерактивная катушка */
+        #center-reel-container {
+            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; display: none; pointer-events: auto; z-index: 500;
         }
 
         #profile-page {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #f0f2f5; z-index: 2000; display: none; pointer-events: auto;
+            background: linear-gradient(135deg, #f0f2f5 0%, #c3cfe2 100%); z-index: 2000; display: none; pointer-events: auto;
             flex-direction: column; align-items: center; padding-top: 60px;
         }
         .p-card {
-            background: white; width: 85%; max-width: 450px; padding: 40px;
-            border-radius: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            text-align: center; border: 1px solid #ddd;
+            background: white; width: 85%; max-width: 450px; padding: 45px;
+            border-radius: 50px; box-shadow: 0 30px 100px rgba(0,0,0,0.15);
+            text-align: center; border: 1px solid rgba(0,0,0,0.05);
         }
-        .p-avatar { width: 130px; height: 130px; border-radius: 50%; border: 5px solid #FFD700; margin: 0 auto 20px; background-size: cover; }
+        .p-avatar { width: 150px; height: 150px; border-radius: 50%; border: 6px solid #FFD700; margin: 0 auto 25px; background-size: cover; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         
-        .btn-group { display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 30px; }
-        .btn-action { padding: 20px; border-radius: 20px; border: none; font-weight: 900; font-size: 20px; cursor: pointer; }
+        .btn-group { display: flex; flex-direction: column; gap: 18px; width: 100%; margin-top: 35px; }
+        .btn-action { padding: 22px; border-radius: 25px; border: none; font-weight: 900; font-size: 22px; cursor: pointer; transition: 0.2s; }
+        .btn-action:hover { filter: brightness(1.1); }
         .dep-btn { background: #0088cc; color: white; }
         .wd-btn { background: #28a745; color: white; }
         
         #catch-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #fff; padding: 40px; border-radius: 35px; width: 85%; max-width: 420px;
+            background: #fff; padding: 50px; border-radius: 50px; width: 85%; max-width: 450px;
             text-align: center; display: none; pointer-events: auto; z-index: 3000;
-            box-shadow: 0 0 100px rgba(0,0,0,0.5); border: 4px solid #FFD700;
+            box-shadow: 0 0 150px rgba(0,0,0,0.6); border: 5px solid #FFD700;
         }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 1500; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; z-index: 1500; }
     </style>
 </head>
 <body>
@@ -72,81 +80,89 @@
 
 <div id="ui-layer">
     <div class="hud" onclick="showProfile()">
-        <div id="mini-avatar" style="width:40px; height:40px; border-radius:50%; background:#ddd; margin-right:15px; border:2px solid #FFD700; background-size:cover;"></div>
+        <div id="mini-avatar" style="width:50px; height:50px; border-radius:50%; background:#ddd; margin-right:15px; border:3px solid #FFD700; background-size:cover;"></div>
         <div>
-            <span id="u-name" style="font-weight:bold; font-size:14px;">@user</span><br>
-            <span id="balance-val" style="font-size:22px; font-weight:900; color:#2E7D32;">50</span> ⭐️
+            <span id="u-name" style="font-weight:900; font-size:16px; color:#555;">@fisher</span><br>
+            <span id="balance-val" style="font-size:26px; font-weight:900; color:#2E7D32;">50</span> <span style="color:#FFD700">⭐️</span>
         </div>
     </div>
     
-    <div id="reel-zone" onmousedown="startReeling()" ontouchstart="startReeling()" onmouseup="stopReeling()" ontouchend="stopReeling()">
+    <div id="reel-zone">
         <div id="reel-progress"></div>
-        <div style="color: white; transform: rotate(-90deg); position: absolute; top: 50%; left: -25px; font-weight: bold; width: 130px;">КРУТИ КАТУШКУ</div>
     </div>
 
-    <div id="msg-box" style="position:absolute; top: 130px; width:100%; text-align:center; color:white; font-size:26px; font-weight:900; text-shadow:2px 2px 10px rgba(0,0,0,0.8);"></div>
+    <div id="center-reel-container">
+        <canvas id="reelCanvas" width="250" height="250"></canvas>
+    </div>
+
+    <div id="msg-box" style="position:absolute; top: 150px; width:100%; text-align:center; color:white; font-size:32px; font-weight:900; text-shadow:0 4px 15px rgba(0,0,0,1); letter-spacing:1px;"></div>
     <button id="main-action" class="btn-main">ЗАБРОС (50 ⭐️)</button>
 </div>
 
 <div id="profile-page">
     <div class="p-card">
         <div class="p-avatar" id="large-avatar"></div>
-        <h1 id="full-u-name">@user</h1>
-        <div style="font-size:40px; font-weight:900; color:#2E7D32; margin: 10px 0;"><span id="p-balance">50</span> ⭐️</div>
+        <h1 id="full-u-name" style="margin:0; color:#333;">@fisher</h1>
+        <div style="font-size:45px; font-weight:900; color:#2E7D32; margin: 15px 0;"><span id="p-balance">50</span> ⭐️</div>
         <div class="btn-group">
-            <button class="btn-action dep-btn" onclick="alert('Оплата через Telegram Stars...')">ПОПОЛНИТЬ ⭐️</button>
-            <button class="btn-action wd-btn" onclick="withdraw()">ВЫВЕСТИ (от 1000)</button>
+            <button class="btn-action dep-btn">ПОПОЛНИТЬ</button>
+            <button class="btn-action wd-btn" onclick="withdraw()">ВЫВЕСТИ</button>
         </div>
-        <p style="margin-top:30px; color:#888; cursor:pointer;" onclick="hideProfile()">← ВЕРНУТЬСЯ К ОЗЕРУ</p>
+        <p style="margin-top:40px; color:#aaa; font-weight:bold; cursor:pointer;" onclick="hideProfile()">ВЕРНУТЬСЯ К РЫБАЛКЕ</p>
     </div>
 </div>
 
 <div id="overlay" class="overlay"></div>
 
 <div id="catch-modal">
-    <h1 id="f-name" style="font-size:36px; margin:0;">Золотая рыбка!</h1>
-    <p id="f-info" style="font-size:20px; color:#666;"></p>
-    <div id="f-price" style="font-size:48px; font-weight:900; margin:25px 0;"></div>
+    <h1 id="f-name" style="font-size:42px; margin:0; color:#333;">Улов!</h1>
+    <p id="f-info" style="font-size:22px; color:#777; margin:10px 0;"></p>
+    <div id="f-price" style="font-size:60px; font-weight:900; margin:30px 0;"></div>
     <button class="btn-main" style="position:static; transform:none; width:100%;" onclick="hideModals()">ЗАБРАТЬ</button>
 </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const reelCanvas = document.getElementById('reelCanvas');
+const rCtx = reelCanvas.getContext('2d');
 const mainBtn = document.getElementById('main-action');
 const msgBox = document.getElementById('msg-box');
 const reelZone = document.getElementById('reel-zone');
 const reelProgress = document.getElementById('reel-progress');
+const reelContainer = document.getElementById('center-reel-container');
 
 let balance = 50;
 let state = 'IDLE'; 
 let width, height;
 let wavePos = 0;
-let rodDeg = 30;
-let targetDeg = 30;
+let rodDeg = 35;
+let targetDeg = 35;
 let catchAnim = { active: false, x: 0, y: 0, s: 0, fish: null };
 
-// Механика катушки
+// Катушка и Прогресс
 let currentProgress = 0;
-let isReeling = false;
-let reelSpeed = 0.5;
+let lastAngle = 0;
+let totalRotation = 0;
+let isDraggingReel = false;
 
 const fishDatabase = [
-    { id: 'boot', name: 'Старый ботинок', min: 0, max: 0, chance: 0.55, color: '#3E2723', dark: '#1B0000' },
-    { id: 'perch', name: 'Речной окунь', min: 0.1, max: 1.1, chance: 0.30, color: '#4CAF50', dark: '#1B5E20' },
-    { id: 'catfish', name: 'Гигантский сом', min: 1.1, max: 2.0, chance: 0.10, color: '#263238', dark: '#000000' },
-    { id: 'shark', name: 'Опасная акула', min: 2.0, max: 5.0, chance: 0.04, color: '#607D8B', dark: '#263238' },
-    { id: 'gold', name: 'Золотая рыбка', min: 5.0, max: 10.0, chance: 0.01, color: '#FFD700', dark: '#FF8C00' }
+    { id: 'boot', name: 'Старый ботинок', min: 0, max: 0, chance: 0.50, color: '#4E342E', dark: '#2D1B18' },
+    { id: 'perch', name: 'Речной окунь', min: 0.2, max: 1.2, chance: 0.35, color: '#558B2F', dark: '#1B5E20' },
+    { id: 'catfish', name: 'Жирный сом', min: 1.3, max: 2.5, chance: 0.09, color: '#37474F', dark: '#000000' },
+    { id: 'shark', name: 'Белая акула', min: 2.6, max: 6.0, chance: 0.05, color: '#78909C', dark: '#263238' },
+    { id: 'gold', name: 'Золотая рыбка', min: 8.0, max: 15.0, chance: 0.01, color: '#FFC107', dark: '#E65100' }
 ];
 
 function init() {
-    const user = { n: "Russian_Fisher", a: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky" };
+    const user = { n: "MasterFisher", a: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Lucky" };
     document.getElementById('u-name').textContent = "@" + user.n;
     document.getElementById('full-u-name').textContent = "@" + user.n;
     document.getElementById('mini-avatar').style.backgroundImage = `url(${user.a})`;
     document.getElementById('large-avatar').style.backgroundImage = `url(${user.a})`;
     resize();
     render();
+    drawReelHandle(0);
 }
 
 function resize() {
@@ -155,146 +171,175 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+// --- ГРАФИКА: РЫБЫ И БОТИНОК ---
 function drawRealisticFish(x, y, fish, scale) {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
     
-    // Градиентное тело
-    let grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 60);
-    grad.addColorStop(0, fish.color);
-    grad.addColorStop(1, fish.dark);
-    ctx.fillStyle = grad;
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 1;
+    let g = ctx.createLinearGradient(0, -30, 0, 30);
+    g.addColorStop(0, fish.color);
+    g.addColorStop(1, fish.dark);
+    ctx.fillStyle = g;
 
     if(fish.id === 'boot') {
+        // Красивый ботинок без глаз
         ctx.beginPath();
-        ctx.moveTo(-35, 25); ctx.lineTo(35, 25); ctx.lineTo(35, -5);
-        ctx.lineTo(5, -5); ctx.lineTo(5, -45); ctx.lineTo(-35, -45);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-        // Шнурки
-        ctx.beginPath(); ctx.strokeStyle = '#fff'; ctx.moveTo(-5, -40); ctx.lineTo(5, -30); ctx.stroke();
-    } else if(fish.id === 'catfish') {
-        ctx.beginPath(); ctx.ellipse(0, 0, 65, 28, 0, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(50, 10); ctx.quadraticCurveTo(80, 40, 60, 60); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(50, -10); ctx.quadraticCurveTo(80, -40, 60, -60); ctx.stroke();
+        ctx.moveTo(-40, 30); ctx.quadraticCurveTo(-45, 30, -45, 25);
+        ctx.lineTo(-45, -30); ctx.lineTo(-10, -30); ctx.lineTo(-10, 0);
+        ctx.lineTo(30, 0); ctx.quadraticCurveTo(45, 0, 45, 15);
+        ctx.lineTo(45, 30); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
+        // Подошва
+        ctx.fillStyle = '#111'; ctx.fillRect(-45, 25, 90, 8);
     } else {
-        ctx.beginPath(); ctx.ellipse(0, 0, 55, 25, 0, 0, Math.PI*2); ctx.fill();
-        // Плавники
-        ctx.beginPath(); ctx.moveTo(-10, -20); ctx.lineTo(-30, -45); ctx.lineTo(-40, -20); ctx.fill();
+        // Рыбы с градиентами
+        ctx.beginPath(); ctx.ellipse(0, 0, 60, 30, 0, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.stroke();
+        // Хвост
+        ctx.beginPath(); ctx.moveTo(-55, 0); ctx.lineTo(-85, -35); ctx.lineTo(-85, 35); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // Глаз (только у рыб)
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(40, -10, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(43, -10, 4, 0, Math.PI*2); ctx.fill();
     }
-    
-    // Чешуя (блики)
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(-10, -5, 10, 0, Math.PI*2); ctx.fill();
-    
-    // Глаз
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(40, -8, 7, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(42, -8, 3, 0, Math.PI*2); ctx.fill();
-    
     ctx.restore();
 }
 
+// --- ГРАФИКА КАТУШКИ ---
+function drawReelHandle(angle) {
+    rCtx.clearRect(0, 0, 250, 250);
+    let cx = 125, cy = 125;
+    
+    // Корпус катушки
+    rCtx.fillStyle = '#333';
+    rCtx.beginPath(); rCtx.arc(cx, cy, 80, 0, Math.PI*2); rCtx.fill();
+    rCtx.strokeStyle = '#FFD700'; rCtx.lineWidth = 5; rCtx.stroke();
+    
+    // Внутренний круг
+    rCtx.fillStyle = '#444';
+    rCtx.beginPath(); rCtx.arc(cx, cy, 60, 0, Math.PI*2); rCtx.fill();
+
+    // Ручка
+    rCtx.save();
+    rCtx.translate(cx, cy);
+    rCtx.rotate(angle);
+    rCtx.fillStyle = '#FFD700';
+    rCtx.fillRect(0, -10, 90, 20); // Рычаг
+    rCtx.fillStyle = '#222';
+    rCtx.beginPath(); rCtx.arc(90, 0, 20, 0, Math.PI*2); rCtx.fill(); // Пипка
+    rCtx.restore();
+}
+
+// --- ЛОГИКА КРУЧЕНИЯ ---
+function getAngle(x, y) {
+    let rect = reelCanvas.getBoundingClientRect();
+    let dx = x - (rect.left + rect.width/2);
+    let dy = y - (rect.top + rect.height/2);
+    return Math.atan2(dy, dx);
+}
+
+const handleReelMove = (e) => {
+    if(!isDraggingReel || state !== 'REELING') return;
+    let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    let currentAngle = getAngle(clientX, clientY);
+    let diff = currentAngle - lastAngle;
+    
+    if (diff > Math.PI) diff -= Math.PI * 2;
+    if (diff < -Math.PI) diff += Math.PI * 2;
+    
+    totalRotation += Math.abs(diff);
+    lastAngle = currentAngle;
+    
+    drawReelHandle(currentAngle);
+    
+    // Заполнение бара
+    currentProgress = Math.min(100, totalRotation * 2.5); 
+    reelProgress.style.height = currentProgress + '%';
+    
+    if(currentProgress >= 100) finishCatch();
+};
+
+reelCanvas.addEventListener('mousedown', (e) => { isDraggingReel = true; lastAngle = getAngle(e.clientX, e.clientY); });
+reelCanvas.addEventListener('touchstart', (e) => { isDraggingReel = true; lastAngle = getAngle(e.touches[0].clientX, e.touches[0].clientY); });
+window.addEventListener('mousemove', handleReelMove);
+window.addEventListener('touchmove', handleReelMove);
+window.addEventListener('mouseup', () => isDraggingReel = false);
+window.addEventListener('touchend', () => isDraggingReel = false);
+
+// --- ОСНОВНОЙ ЦИКЛ ---
 function render() {
     ctx.clearRect(0, 0, width, height);
 
     // НЕБО
     let skyG = ctx.createLinearGradient(0, 0, 0, height*0.5);
-    skyG.addColorStop(0, '#87CEEB'); skyG.addColorStop(1, '#E0F7FA');
+    skyG.addColorStop(0, '#00B4DB'); skyG.addColorStop(1, '#0083B0');
     ctx.fillStyle = skyG; ctx.fillRect(0, 0, width, height*0.5);
 
-    // ВОДА
-    wavePos += 0.05;
+    // ВОДА (На весь экран по ширине)
+    wavePos += 0.04;
     let waterG = ctx.createLinearGradient(0, height*0.5, 0, height);
-    waterG.addColorStop(0, '#1976D2'); waterG.addColorStop(1, '#0D47A1');
+    waterG.addColorStop(0, '#021B79'); waterG.addColorStop(1, '#0575E6');
     ctx.fillStyle = waterG; ctx.fillRect(0, height*0.5, width, height*0.5);
 
-    for(let j=0; j<6; j++) {
-        ctx.strokeStyle = `rgba(255,255,255,${0.15 - j*0.02})`;
-        ctx.beginPath(); ctx.moveTo(0, height*0.5 + j*50);
-        for(let x=0; x<width; x+=30) {
-            ctx.lineTo(x, height*0.5 + j*50 + Math.sin(x*0.01 + wavePos + j)*12);
+    // ВОЛНЫ (Исправлено заполнение)
+    ctx.lineWidth = 3;
+    for(let j=0; j<10; j++) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.12 - j*0.01})`;
+        ctx.beginPath();
+        for(let x=-50; x < width + 50; x += 20) {
+            let y = height*0.52 + j*45 + Math.sin(x*0.015 + wavePos + j)*15;
+            if(x === -50) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
     }
 
-    // УДОЧКА (Улучшенная)
+    // УДОЧКА (Видна полностью)
     rodDeg += (targetDeg - rodDeg) * 0.1;
-    let rx = width * 0.9; let ry = height * 1.0;
-    let tx = rx + Math.cos(rodDeg * Math.PI/180) * -550;
-    let ty = ry + Math.sin(rodDeg * Math.PI/180) * -550;
+    let rx = width * 0.92; let ry = height * 0.98;
+    let rodLen = Math.min(width, height) * 0.7; // Адаптивная длина
+    let tx = rx + Math.cos(rodDeg * Math.PI/180) * -rodLen;
+    let ty = ry + Math.sin(rodDeg * Math.PI/180) * -rodLen;
 
-    // Углепластик
-    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 14;
-    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 14; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(tx, ty); ctx.stroke();
     
-    // Кольца
-    ctx.strokeStyle = '#gold'; ctx.lineWidth = 2;
-    for(let i=1; i<5; i++) {
-        let cx = rx + (tx - rx) * (i/5);
-        let cy = ry + (ty - ry) * (i/5);
-        ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.stroke();
+    // Кольца и леска
+    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3;
+    for(let i=1; i<=4; i++) {
+        ctx.beginPath(); ctx.arc(rx + (tx-rx)*(i/5), ry + (ty-ry)*(i/5), 7, 0, Math.PI*2); ctx.stroke();
     }
 
-    // КАТУШКА
-    ctx.fillStyle = '#444';
-    ctx.beginPath(); ctx.arc(rx - 30, ry - 30, 25, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#666';
-    ctx.save();
-    ctx.translate(rx-30, ry-30);
-    if(isReeling) ctx.rotate(Date.now()*0.01);
-    ctx.fillRect(-5, -35, 10, 20);
-    ctx.restore();
-
-    // ЛЕСКА
     if(state !== 'IDLE') {
         let bx = width*0.4;
         let by = height*0.65 + Math.sin(wavePos)*10;
-        if(state === 'BITING' || state === 'REELING') by += Math.sin(Date.now()*0.05)*25;
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+        if(state === 'BITING' || state === 'REELING') by += Math.sin(Date.now()*0.06)*30;
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(bx, by); ctx.stroke();
-
-        ctx.fillStyle = '#FF5252'; ctx.beginPath(); ctx.arc(bx, by, 12, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.fillRect(bx-2, by, 4, 15);
+        // Поплавок
+        ctx.fillStyle = '#f44336'; ctx.beginPath(); ctx.arc(bx, by, 15, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillRect(bx-3, by-20, 6, 20);
     }
 
     if(catchAnim.active) {
         drawRealisticFish(catchAnim.x, catchAnim.y, catchAnim.fish, catchAnim.s);
-        catchAnim.y -= 4;
-        catchAnim.s += (1.6 - catchAnim.s) * 0.05;
+        catchAnim.y -= 5;
+        catchAnim.s += (1.8 - catchAnim.s) * 0.05;
     }
-
-    // Логика катушки
-    if(isReeling && state === 'REELING') {
-        currentProgress += reelSpeed;
-        reelProgress.style.height = currentProgress + '%';
-        if(currentProgress >= 100) finishCatch();
-    }
-
     requestAnimationFrame(render);
 }
 
-function safeVibrate(ms) {
-    if ("vibrate" in navigator) try { navigator.vibrate(ms); } catch(e) {}
-}
-
+// --- ГЕЙМПЛЕЙ ---
 mainBtn.addEventListener('click', () => {
     if(state === 'IDLE') {
-        if(balance < 50) return alert("Недостаточно звёзд!");
+        if(balance < 50) return alert("Нужно больше звезд!");
         balance -= 50; updateStats();
-        state = 'CASTING'; targetDeg = -10;
-        mainBtn.disabled = true; msgBox.textContent = "ЗАБРОС...";
-        setTimeout(() => {
-            targetDeg = 20; state = 'WAITING';
-            mainBtn.textContent = "ЖДИ...";
-            setTimeout(startBite, Math.random() * 8000 + 7000);
-        }, 1000);
+        state = 'CASTING'; targetDeg = -15;
+        mainBtn.disabled = true; msgBox.textContent = "ЗАБРАСЫВАЕМ...";
+        setTimeout(() => { targetDeg = 25; state = 'WAITING'; mainBtn.textContent = "ЖДИ...";
+            setTimeout(startBite, Math.random() * 6000 + 5000);
+        }, 1200);
     } else if(state === 'BITING') {
         startReelingMode();
     }
@@ -302,84 +347,45 @@ mainBtn.addEventListener('click', () => {
 
 function startBite() {
     if(state !== 'WAITING') return;
-    state = 'BITING';
-    mainBtn.disabled = false; mainBtn.textContent = "ПОДСЕКАЙ!";
-    msgBox.textContent = "КЛЮЁТ!";
-    safeVibrate([100, 50, 100]);
+    state = 'BITING'; mainBtn.disabled = false; mainBtn.textContent = "ТЯНИ!!!";
+    msgBox.textContent = "КЛЮЁТ!"; safeVibrate([200, 100, 200]);
+    setTimeout(() => { if(state === 'BITING') { state = 'IDLE'; msgBox.textContent = "УШЛА..."; resetUI(); } }, 3500);
 }
 
 function startReelingMode() {
-    state = 'REELING';
-    mainBtn.disabled = true;
+    state = 'REELING'; mainBtn.disabled = true;
     msgBox.textContent = "КРУТИ КАТУШКУ!";
-    reelZone.style.display = 'block';
-    currentProgress = 0;
-    reelSpeed = Math.random() * 0.4 + 0.2; // Разная сложность
+    reelZone.style.display = 'block'; reelContainer.style.display = 'block';
+    currentProgress = 0; totalRotation = 0;
 }
 
-function startReeling() { isReeling = true; safeVibrate(50); }
-function stopReeling() { isReeling = false; }
-
 function finishCatch() {
-    state = 'WINNING';
-    reelZone.style.display = 'none';
-    msgBox.textContent = "ДОСТАЁМ...";
-    
-    let r = Math.random();
-    let fish = fishDatabase[0];
-    let s = 0;
-    for(let f of fishDatabase) {
-        s += f.chance;
-        if(r <= s) { fish = f; break; }
-    }
-
+    state = 'WINNING'; reelZone.style.display = 'none'; reelContainer.style.display = 'none';
+    msgBox.textContent = "ЕСТЬ!";
+    let r = Math.random(); let fish = fishDatabase[0]; let s = 0;
+    for(let f of fishDatabase) { s += f.chance; if(r <= s) { fish = f; break; } }
     let m = (Math.random() * (fish.max - fish.min) + fish.min).toFixed(1);
     let win = Math.floor(50 * m);
-
-    catchAnim = { active: true, x: width * 0.45, y: height * 0.5, s: 0.1, fish: fish };
-    safeVibrate(300);
-
-    setTimeout(() => {
-        balance += win;
-        updateStats();
-        showModal(fish, m, win);
-    }, 2500);
+    catchAnim = { active: true, x: width * 0.45, y: height * 0.6, s: 0.2, fish: fish };
+    setTimeout(() => { balance += win; updateStats(); showModal(fish, m, win); }, 2000);
 }
 
 function showModal(fish, m, win) {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('catch-modal').style.display = 'block';
     document.getElementById('f-name').textContent = fish.name;
-    document.getElementById('f-info').textContent = `Множитель: x${m}`;
+    document.getElementById('f-info').textContent = win > 0 ? `Множитель x${m}` : "Просто мусор...";
     document.getElementById('f-price').textContent = `+ ${win} ⭐️`;
-    document.getElementById('f-price').style.color = win > 0 ? "#28a745" : "#dc3545";
+    document.getElementById('f-price').style.color = win > 0 ? "#2E7D32" : "#555";
 }
 
-function resetUI() {
-    state = 'IDLE'; mainBtn.disabled = false;
-    mainBtn.textContent = "ЗАБРОС (50 ⭐️)";
-    targetDeg = 30; catchAnim.active = false;
-    reelProgress.style.height = '0%';
-}
-
-function hideModals() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('catch-modal').style.display = 'none';
-    resetUI();
-}
-
+function resetUI() { state = 'IDLE'; mainBtn.disabled = false; mainBtn.textContent = "ЗАБРОС (50 ⭐️)"; targetDeg = 35; catchAnim.active = false; }
+function hideModals() { document.getElementById('overlay').style.display = 'none'; document.getElementById('catch-modal').style.display = 'none'; resetUI(); }
 function showProfile() { document.getElementById('profile-page').style.display = 'flex'; updateStats(); }
 function hideProfile() { document.getElementById('profile-page').style.display = 'none'; }
-
-function updateStats() {
-    document.getElementById('balance-val').textContent = balance;
-    document.getElementById('p-balance').textContent = balance;
-}
-
-function withdraw() {
-    if(balance < 1000) return alert("Минимум 1000 звёзд!");
-    alert("Заявка отправлена боту!");
-}
+function updateStats() { document.getElementById('balance-val').textContent = balance; document.getElementById('p-balance').textContent = balance; }
+function withdraw() { if(balance < 1000) return alert("Минимум 1000 ⭐️"); alert("Заявка принята!"); }
+function safeVibrate(m) { if(navigator.vibrate) navigator.vibrate(m); }
 
 init();
 </script>

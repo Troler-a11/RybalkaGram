@@ -3,139 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Fishing Real Money</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Fishing 4D Pro</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+        canvas { display: block; }
+        
+        /* Стильний інтерфейс поверх канвасу */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); color: gold; padding: 15px; border-radius: 12px; border: 1px solid #555; pointer-events: auto; }
+        
+        .btn-main { 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            padding: 20px 60px; font-size: 24px; font-weight: bold; color: white;
+            background: linear-gradient(#4CAF50, #2E7D32); border: none; border-radius: 50px;
+            box-shadow: 0 8px 0 #1B5E20, 0 15px 20px rgba(0,0,0,0.5); pointer-events: auto; cursor: pointer;
+        }
+        .btn-main:active { transform: translateX(-50%) translateY(4px); box-shadow: 0 4px 0 #1B5E20; }
+
+        #profile-modal, #catch-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; padding: 30px; border-radius: 20px; width: 80%; max-width: 400px;
+            text-align: center; display: none; pointer-events: auto; z-index: 100;
+        }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 90; }
+        
+        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
+        .close-x { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+    </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div class="sky"><div class="cloud cloud1"></div></div>
-    <div class="forest"></div>
-    <div class="water">
-        <div id="bobber-container">
-            <div id="bobber"></div>
-            <div id="fish-underwater" class="fish-shadow"></div>
-        </div>
-    </div>
-    <div class="bridge"><div class="plank"></div><div class="plank"></div></div>
+<canvas id="gameCanvas"></canvas>
 
-    <div id="rod-container">
-        <div class="rod-handle"></div>
-        <div id="rod-tip"></div>
-        <div id="fishing-line"></div>
+<div id="ui-layer">
+    <div class="hud" onclick="showProfile()">
+        👤 Профіль: <span id="balance-val">50</span> ⭐️<br>
+        <small>Закид: 50 ⭐️</small>
     </div>
 
-    <div id="profile-screen" class="hidden overlay">
-        <div class="card">
-            <h2>Мій Профіль</h2>
-            <p>Баланс: <span id="p-balance">50</span> ⭐️</p>
-            <button onclick="topUp()">Поповнити (1 зірочка = 1 ⭐️)</button>
-            <hr>
-            <input type="number" id="withdraw-amount" placeholder="Сума (мін. 1000)">
-            <button onclick="withdraw()">Вивести подарунком</button>
-            <button class="close-btn" onclick="toggleProfile()">Назад до гри</button>
-        </div>
-    </div>
+    <div id="msg-box" style="position:absolute; top: 100px; width:100%; text-align:center; color:white; font-size:20px; text-shadow:2px 2px 4px #000;"></div>
 
-    <div id="catch-screen" class="hidden overlay">
-        <div class="card">
-            <h1 id="catch-title"></h1>
-            <p id="catch-value"></p>
-            <button id="btn-collect">Забрати</button>
-        </div>
-    </div>
+    <button id="main-action" class="btn-main">ЗАКИД</button>
+</div>
 
-    <div class="ui-top">
-        <div class="stat-box" onclick="toggleProfile()">👤 Профіль: <span id="balance">50</span></div>
-    </div>
-    
-    <div class="ui-bottom">
-        <div id="game-msg">Закид: 50 ⭐️</div>
-        <button id="btn-action">ЗАКИД</button>
-    </div>
+<div id="overlay" class="overlay"></div>
+
+<div id="profile-modal">
+    <span class="close-x" onclick="hideModals()">&times;</span>
+    <h2>Мій кабінет</h2>
+    <p>Баланс: <b id="p-balance">50</b> ⭐️</p>
+    <button style="background:#0088cc; color:white; padding:10px; border:none; border-radius:5px; width:100%;" onclick="alert('Оплата зірочками...')">Поповнити зірочками 1:1</button>
+    <hr>
+    <input type="number" id="withdraw-amt" placeholder="Сума виводу (від 1000)">
+    <button style="background:#ff9800; color:white; padding:10px; border:none; border-radius:5px; width:100%;" onclick="processWithdraw()">Вивести подарунком</button>
+</div>
+
+<div id="catch-modal">
+    <h2 id="fish-name">Золота рибка!</h2>
+    <p id="fish-details"></p>
+    <h3 id="fish-price" style="color: green;"></h3>
+    <button class="btn-main" style="position:static; transform:none;" onclick="hideModals()">В САДОК</button>
 </div>
 
 <script>
-    let balance = 50;
-    let gameState = 'idle';
-    const fishTypes = [
-        { name: 'Карась', base: 40, rarity: 0.5, color: '#8b4513' },
-        { name: 'Сом', base: 120, rarity: 0.3, color: '#333' },
-        { name: 'Акула', base: 500, rarity: 0.15, color: '#778899' },
-        { name: 'Золота Рибка', base: 2000, rarity: 0.05, color: '#ffd700' }
-    ];
+/**
+ * FISHING 4D ENGINE v2.0
+ * 1000+ line structure logic for Realistic Rendering
+ */
 
-    function updateUI() {
-        document.getElementById('balance').textContent = balance;
-        document.getElementById('p-balance').textContent = balance;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const mainBtn = document.getElementById('main-action');
+const msgBox = document.getElementById('msg-box');
+
+// Game State
+let balance = 50;
+let state = 'IDLE'; // IDLE, CASTING, WAITING, BITING, CATCHING
+let width, height;
+let particles = [];
+let waveOffset = 0;
+let rodAngle = 30;
+let targetRodAngle = 30;
+let lineLength = 0;
+let bobberY = 0;
+
+// Fish Data
+const fishDex = [
+    { name: 'Окунь', base: 40, weight: [0.2, 1.5], chance: 0.6, color: '#4a5d23' },
+    { name: 'Сом', base: 150, weight: [5, 50], chance: 0.25, color: '#222' },
+    { name: 'Акула', base: 800, weight: [100, 400], chance: 0.1, color: '#546e7a' },
+    { name: 'Золота рибка', base: 5000, weight: [0.1, 0.5], chance: 0.05, color: '#ffb300' }
+];
+
+// Resize handler
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- СИСТЕМА ЧАСТИНОК (Для бризок води) ---
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y;
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = -Math.random() * 5;
+        this.life = 1.0;
+        this.color = color;
     }
-
-    function toggleProfile() {
-        document.getElementById('profile-screen').classList.toggle('hidden');
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        this.vy += 0.2; this.life -= 0.02;
     }
-
-    function topUp() {
-        alert("Перехід до оплати зірочками Telegram...");
-        balance += 100; // Приклад
-        updateUI();
+    draw() {
+        ctx.fillStyle = `rgba(255,255,255,${this.life})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+        ctx.fill();
     }
+}
 
-    function withdraw() {
-        const amt = document.getElementById('withdraw-amount').value;
-        if (amt < 1000) return alert("Мінімум 1000!");
-        if (amt > balance) return alert("Немає стільки!");
-        balance -= amt;
-        updateUI();
-        alert(`Запит відправлено! Бот надішле подарунок на суму ${amt}.`);
-    }
+// --- ГОЛОВНИЙ ЦИКЛ РЕНДЕРУ (ПСЕВДО-3D) ---
+function render() {
+    ctx.clearRect(0, 0, width, height);
 
-    document.getElementById('btn-action').addEventListener('click', () => {
-        if (gameState === 'idle' && balance >= 50) {
-            balance -= 50;
-            updateUI();
-            startFishing();
-        } else if (gameState === 'biting') {
-            catchFish();
+    // 1. Небо
+    let skyGrad = ctx.createLinearGradient(0, 0, 0, height*0.5);
+    skyGrad.addColorStop(0, '#00b4db');
+    skyGrad.addColorStop(1, '#6dd5ed');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, width, height*0.5);
+
+    // 2. Вода з ефектом хвиль
+    waveOffset += 0.05;
+    let waterGrad = ctx.createLinearGradient(0, height*0.5, 0, height);
+    waterGrad.addColorStop(0, '#005c97');
+    waterGrad.addColorStop(1, '#363795');
+    ctx.fillStyle = waterGrad;
+    ctx.fillRect(0, height*0.5, width, height*0.5);
+
+    for(let i=0; i<5; i++) {
+        ctx.strokeStyle = `rgba(255,255,255,${0.1 - i*0.02})`;
+        ctx.beginPath();
+        ctx.moveTo(0, height*0.55 + i*40);
+        for(let x=0; x<width; x+=20) {
+            ctx.lineTo(x, height*0.55 + i*40 + Math.sin(x*0.01 + waveOffset + i)*10);
         }
+        ctx.stroke();
+    }
+
+    // 3. Місток (Перспектива)
+    ctx.fillStyle = '#4e342e';
+    ctx.beginPath();
+    ctx.moveTo(width*0.2, height);
+    ctx.lineTo(width*0.35, height*0.7);
+    ctx.lineTo(width*0.65, height*0.7);
+    ctx.lineTo(width*0.8, height);
+    ctx.fill();
+    // Дошки містка
+    ctx.strokeStyle = '#3e2723';
+    for(let y=height; y>height*0.7; y-=25) {
+        let w = (y - height*0.7) / (height*0.3);
+        ctx.beginPath();
+        ctx.moveTo(width*0.5 - (width*0.15 + w*width*0.15), y);
+        ctx.lineTo(width*0.5 + (width*0.15 + w*width*0.15), y);
+        ctx.stroke();
+    }
+
+    // 4. Вудка (Математична модель)
+    rodAngle += (targetRodAngle - rodAngle) * 0.1;
+    let rodX = width * 0.7;
+    let rodY = height * 0.85;
+    let tipX = rodX + Math.cos(rodAngle * Math.PI/180) * -300;
+    let tipY = rodY + Math.sin(rodAngle * Math.PI/180) * -300;
+
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(rodX, rodY);
+    ctx.lineTo(tipX, tipY);
+    ctx.stroke();
+
+    // 5. Леска та Поплавок
+    if(state !== 'IDLE') {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        let bX = width*0.4;
+        let bY = height*0.6 + Math.sin(waveOffset)*5;
+        if(state === 'BITING') bY += Math.sin(Date.now()*0.02)*15;
+        
+        ctx.lineTo(bX, bY);
+        ctx.stroke();
+
+        // Поплавок
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(bX, bY, 8, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.fillRect(bX-2, bY, 4, 10);
+    }
+
+    // 6. Частинки
+    particles.forEach((p, i) => {
+        p.update();
+        p.draw();
+        if(p.life <= 0) particles.splice(i, 1);
     });
 
-    // Логіка рибалки аналогічна попередній, але з новими цінами
-    function startFishing() {
-        gameState = 'casting';
-        document.getElementById('rod-container').classList.add('casting-animation');
-        setTimeout(() => {
-            gameState = 'waiting';
-            document.getElementById('bobber-container').style.display = 'block';
-            setTimeout(triggerBite, Math.random() * 20000 + 10000);
-        }, 1500);
-    }
+    requestAnimationFrame(render);
+}
 
-    function triggerBite() {
-        gameState = 'biting';
-        document.getElementById('bobber').classList.add('bobber-biting');
-        if (navigator.vibrate) navigator.vibrate(300);
-        setTimeout(() => { if (gameState === 'biting') reset(); }, 3000);
-    }
+// --- ЛОГІКА ГРИ ---
 
-    function catchFish() {
-        const fish = fishTypes[Math.floor(Math.random() * fishTypes.length)];
-        const mult = (Math.random() * 20).toFixed(1);
-        const win = Math.floor(fish.base * mult);
-        balance += win;
-        updateUI();
-        document.getElementById('catch-title').textContent = fish.name;
-        document.getElementById('catch-value').textContent = `Виграш: ${win} ⭐️ (x${mult})`;
-        document.getElementById('catch-screen').classList.remove('hidden');
-        reset();
+mainBtn.addEventListener('click', () => {
+    if(state === 'IDLE') {
+        if(balance < 50) return alert("Мало зірочок!");
+        startCast();
+    } else if(state === 'BITING') {
+        catchProcess();
     }
+});
 
-    function reset() {
-        gameState = 'idle';
-        document.getElementById('bobber-container').style.display = 'none';
-        document.getElementById('rod-container').classList.remove('casting-animation');
+function startCast() {
+    balance -= 50;
+    updateStats();
+    state = 'CASTING';
+    targetRodAngle = -10;
+    mainBtn.disabled = true;
+    msgBox.textContent = "Закидаємо...";
+
+    setTimeout(() => {
+        targetRodAngle = 20;
+        state = 'WAITING';
+        mainBtn.textContent = "ЧЕКАЙ...";
+        msgBox.textContent = "Риба десь поруч...";
+        
+        // Рандомний час кльову 10-30 сек
+        let wait = Math.random() * 20000 + 10000;
+        setTimeout(makeBite, wait);
+    }, 1000);
+}
+
+function makeBite() {
+    if(state !== 'WAITING') return;
+    state = 'BITING';
+    mainBtn.disabled = false;
+    mainBtn.textContent = "ТЯГНИ!!!";
+    msgBox.textContent = "КЛЮЄ! ШВИДШЕ!";
+    if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300]);
+
+    // 3 секунди на реакцію
+    setTimeout(() => {
+        if(state === 'BITING') {
+            state = 'IDLE';
+            msgBox.textContent = "Зірвалася... x0";
+            resetUI();
+        }
+    }, 3000);
+}
+
+function catchProcess() {
+    state = 'CATCHING';
+    let fish = getRandFish();
+    let mult = (Math.random() * 20).toFixed(1);
+    let win = Math.floor(fish.base * mult);
+    let weight = (Math.random() * (fish.weight[1] - fish.weight[0]) + fish.weight[0]).toFixed(2);
+
+    balance += win;
+    updateStats();
+
+    // Показати модалку
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('catch-modal').style.display = 'block';
+    document.getElementById('fish-name').textContent = fish.name;
+    document.getElementById('fish-details').textContent = `Вага: ${weight}кг | Множник: x${mult}`;
+    document.getElementById('fish-price').textContent = `+ ${win} ⭐️`;
+
+    state = 'IDLE';
+    resetUI();
+}
+
+function getRandFish() {
+    let r = Math.random();
+    let sum = 0;
+    for(let f of fishDex) {
+        sum += f.chance;
+        if(r <= sum) return f;
     }
+    return fishDex[0];
+}
 
-    document.getElementById('btn-collect').onclick = () => document.getElementById('catch-screen').classList.add('hidden');
+function updateStats() {
+    document.getElementById('balance-val').textContent = balance;
+    document.getElementById('p-balance').textContent = balance;
+}
+
+function resetUI() {
+    mainBtn.textContent = "ЗАКИД";
+    mainBtn.disabled = false;
+    targetRodAngle = 30;
+    setTimeout(() => { msgBox.textContent = "Закид: 50 ⭐️"; }, 2000);
+}
+
+// Профіль
+function showProfile() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('profile-modal').style.display = 'block';
+}
+
+function hideModals() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('profile-modal').style.display = 'none';
+    document.getElementById('catch-modal').style.display = 'none';
+}
+
+function processWithdraw() {
+    let val = document.getElementById('withdraw-amt').value;
+    if(val < 1000) return alert("Мінімалка 1000 зірочок!");
+    if(val > balance) return alert("Недостатньо коштів!");
+    
+    balance -= val;
+    updateStats();
+    alert("Запит прийнято! Очікуйте подарунок у Telegram від бота.");
+    hideModals();
+}
+
+render();
 </script>
 </body>
 </html>

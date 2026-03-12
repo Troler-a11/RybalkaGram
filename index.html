@@ -3,336 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fishing 4D Pro</title>
+    <title>Fishing Casino 4D</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
-        canvas { display: block; }
+        :root { --gold: #ffd700; --bg: #0e1621; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        canvas { display: block; filter: contrast(1.1) saturate(1.2); }
         
-        /* Стильний інтерфейс поверх канвасу */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); color: gold; padding: 15px; border-radius: 12px; border: 1px solid #555; pointer-events: auto; }
-        
-        .btn-main { 
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            padding: 20px 60px; font-size: 24px; font-weight: bold; color: white;
-            background: linear-gradient(#4CAF50, #2E7D32); border: none; border-radius: 50px;
-            box-shadow: 0 8px 0 #1B5E20, 0 15px 20px rgba(0,0,0,0.5); pointer-events: auto; cursor: pointer;
-        }
-        .btn-main:active { transform: translateX(-50%) translateY(4px); box-shadow: 0 4px 0 #1B5E20; }
+        /* UI блоки */
+        #game-ui, #profile-page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; transition: 0.3s; }
+        #profile-page { background: var(--bg); pointer-events: auto; display: none; flex-direction: column; align-items: center; padding-top: 40px; }
+        .active { display: flex !important; }
 
-        #profile-modal, #catch-modal {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #fff; padding: 30px; border-radius: 20px; width: 80%; max-width: 400px;
-            text-align: center; display: none; pointer-events: auto; z-index: 100;
+        .pointer { pointer-events: auto; cursor: pointer; }
+
+        /* Профіль компоненти */
+        .user-avatar { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 10px; background: #2b5278; }
+        .user-name { color: white; font-size: 22px; font-weight: bold; margin-bottom: 5px; }
+        .balance-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; width: 80%; text-align: center; margin: 20px 0; border: 1px solid rgba(255,215,0,0.3); }
+        .btn-action { width: 80%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; color: white; cursor: pointer; }
+        .btn-deposit { background: #0088cc; }
+        .btn-withdraw { background: #333; color: #aaa; }
+        .btn-back { background: transparent; border: 1px solid #555; margin-top: 20px; }
+
+        /* Кнопка закиду */
+        .main-btn { 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(#ff4e50, #f9d423);
+            border: 8px solid rgba(255,255,255,0.2); color: white; font-size: 28px; font-weight: 900;
+            box-shadow: 0 0 30px rgba(255,78,80,0.5); pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 90; }
-        
-        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
-        .close-x { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+        .main-btn:disabled { filter: grayscale(1); opacity: 0.5; }
+
+        /* Анімація риби при лові */
+        #fish-reveal {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            z-index: 100; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center; pointer-events: none;
+        }
+        .show-fish { transform: translate(-50%, -50%) scale(1.5) !important; }
+        .fish-img { width: 100px; filter: drop-shadow(0 0 10px white); }
+
+        .hud-top { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: var(--gold); padding: 10px 20px; border-radius: 30px; pointer-events: auto; border: 1px solid var(--gold); }
     </style>
 </head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
 
-<div id="ui-layer">
-    <div class="hud" onclick="showProfile()">
-        👤 Профіль: <span id="balance-val">50</span> ⭐️<br>
-        <small>Закид: 50 ⭐️</small>
+<div id="game-ui">
+    <div class="hud-top pointer" onclick="openProfile()">
+        👤 <span id="header-balance">50</span> ⭐️
+    </div>
+    <div id="msg-box" style="position:absolute; top: 120px; width:100%; text-align:center; color:white; font-size:18px;"></div>
+    <button id="cast-btn" class="main-btn" onclick="handleAction()">ЗАКИД</button>
+</div>
+
+<div id="fish-reveal">
+    <div id="fish-icon" style="font-size: 60px;">🐟</div>
+    <div id="fish-name-tag" style="color: white; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 10px; margin-top: 10px;"></div>
+</div>
+
+<div id="profile-page">
+    <img id="user-photo" class="user-avatar" src="" alt="">
+    <div id="user-name" class="user-name">Гравець</div>
+    <div style="color: #888; font-size: 14px;">ID: <span id="user-id">000000</span></div>
+
+    <div class="balance-card">
+        <div style="color: var(--gold); font-size: 14px; text-transform: uppercase;">Твій Баланс</div>
+        <div style="color: white; font-size: 36px; font-weight: 900;"><span id="p-balance">50</span> ⭐️</div>
     </div>
 
-    <div id="msg-box" style="position:absolute; top: 100px; width:100%; text-align:center; color:white; font-size:20px; text-shadow:2px 2px 4px #000;"></div>
-
-    <button id="main-action" class="btn-main">ЗАКИД</button>
-</div>
-
-<div id="overlay" class="overlay"></div>
-
-<div id="profile-modal">
-    <span class="close-x" onclick="hideModals()">&times;</span>
-    <h2>Мій кабінет</h2>
-    <p>Баланс: <b id="p-balance">50</b> ⭐️</p>
-    <button style="background:#0088cc; color:white; padding:10px; border:none; border-radius:5px; width:100%;" onclick="alert('Оплата зірочками...')">Поповнити зірочками 1:1</button>
-    <hr>
-    <input type="number" id="withdraw-amt" placeholder="Сума виводу (від 1000)">
-    <button style="background:#ff9800; color:white; padding:10px; border:none; border-radius:5px; width:100%;" onclick="processWithdraw()">Вивести подарунком</button>
-</div>
-
-<div id="catch-modal">
-    <h2 id="fish-name">Золота рибка!</h2>
-    <p id="fish-details"></p>
-    <h3 id="fish-price" style="color: green;"></h3>
-    <button class="btn-main" style="position:static; transform:none;" onclick="hideModals()">В САДОК</button>
+    <button class="btn-action btn-deposit" onclick="buyStars()">ПОПОВНИТИ (⭐️ ТГ)</button>
+    <button class="btn-action btn-withdraw" onclick="withdrawReq()">ВИВЕСТИ (ВІД 1000)</button>
+    
+    <button class="btn-action btn-back" onclick="closeProfile()">НАЗАД ДО ОЗЕРА</button>
 </div>
 
 <script>
-/**
- * FISHING 4D ENGINE v2.0
- * 1000+ line structure logic for Realistic Rendering
- */
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const mainBtn = document.getElementById('main-action');
-const msgBox = document.getElementById('msg-box');
-
-// Game State
-let balance = 50;
-let state = 'IDLE'; // IDLE, CASTING, WAITING, BITING, CATCHING
-let width, height;
-let particles = [];
-let waveOffset = 0;
-let rodAngle = 30;
-let targetRodAngle = 30;
-let lineLength = 0;
-let bobberY = 0;
-
-// Fish Data
-const fishDex = [
-    { name: 'Окунь', base: 40, weight: [0.2, 1.5], chance: 0.6, color: '#4a5d23' },
-    { name: 'Сом', base: 150, weight: [5, 50], chance: 0.25, color: '#222' },
-    { name: 'Акула', base: 800, weight: [100, 400], chance: 0.1, color: '#546e7a' },
-    { name: 'Золота рибка', base: 5000, weight: [0.1, 0.5], chance: 0.05, color: '#ffb300' }
-];
-
-// Resize handler
-function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-// --- СИСТЕМА ЧАСТИНОК (Для бризок води) ---
-class Particle {
-    constructor(x, y, color) {
-        this.x = x; this.y = y;
-        this.vx = (Math.random() - 0.5) * 4;
-        this.vy = -Math.random() * 5;
-        this.life = 1.0;
-        this.color = color;
-    }
-    update() {
-        this.x += this.vx; this.y += this.vy;
-        this.vy += 0.2; this.life -= 0.02;
-    }
-    draw() {
-        ctx.fillStyle = `rgba(255,255,255,${this.life})`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
-        ctx.fill();
-    }
-}
-
-// --- ГОЛОВНИЙ ЦИКЛ РЕНДЕРУ (ПСЕВДО-3D) ---
-function render() {
-    ctx.clearRect(0, 0, width, height);
-
-    // 1. Небо
-    let skyGrad = ctx.createLinearGradient(0, 0, 0, height*0.5);
-    skyGrad.addColorStop(0, '#00b4db');
-    skyGrad.addColorStop(1, '#6dd5ed');
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, width, height*0.5);
-
-    // 2. Вода з ефектом хвиль
-    waveOffset += 0.05;
-    let waterGrad = ctx.createLinearGradient(0, height*0.5, 0, height);
-    waterGrad.addColorStop(0, '#005c97');
-    waterGrad.addColorStop(1, '#363795');
-    ctx.fillStyle = waterGrad;
-    ctx.fillRect(0, height*0.5, width, height*0.5);
-
-    for(let i=0; i<5; i++) {
-        ctx.strokeStyle = `rgba(255,255,255,${0.1 - i*0.02})`;
-        ctx.beginPath();
-        ctx.moveTo(0, height*0.55 + i*40);
-        for(let x=0; x<width; x+=20) {
-            ctx.lineTo(x, height*0.55 + i*40 + Math.sin(x*0.01 + waveOffset + i)*10);
-        }
-        ctx.stroke();
-    }
-
-    // 3. Місток (Перспектива)
-    ctx.fillStyle = '#4e342e';
-    ctx.beginPath();
-    ctx.moveTo(width*0.2, height);
-    ctx.lineTo(width*0.35, height*0.7);
-    ctx.lineTo(width*0.65, height*0.7);
-    ctx.lineTo(width*0.8, height);
-    ctx.fill();
-    // Дошки містка
-    ctx.strokeStyle = '#3e2723';
-    for(let y=height; y>height*0.7; y-=25) {
-        let w = (y - height*0.7) / (height*0.3);
-        ctx.beginPath();
-        ctx.moveTo(width*0.5 - (width*0.15 + w*width*0.15), y);
-        ctx.lineTo(width*0.5 + (width*0.15 + w*width*0.15), y);
-        ctx.stroke();
-    }
-
-    // 4. Вудка (Математична модель)
-    rodAngle += (targetRodAngle - rodAngle) * 0.1;
-    let rodX = width * 0.7;
-    let rodY = height * 0.85;
-    let tipX = rodX + Math.cos(rodAngle * Math.PI/180) * -300;
-    let tipY = rodY + Math.sin(rodAngle * Math.PI/180) * -300;
-
-    ctx.strokeStyle = '#222';
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(rodX, rodY);
-    ctx.lineTo(tipX, tipY);
-    ctx.stroke();
-
-    // 5. Леска та Поплавок
-    if(state !== 'IDLE') {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-        ctx.beginPath();
-        ctx.moveTo(tipX, tipY);
-        let bX = width*0.4;
-        let bY = height*0.6 + Math.sin(waveOffset)*5;
-        if(state === 'BITING') bY += Math.sin(Date.now()*0.02)*15;
-        
-        ctx.lineTo(bX, bY);
-        ctx.stroke();
-
-        // Поплавок
-        ctx.fillStyle = 'red';
-        ctx.beginPath();
-        ctx.arc(bX, bY, 8, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = 'white';
-        ctx.fillRect(bX-2, bY, 4, 10);
-    }
-
-    // 6. Частинки
-    particles.forEach((p, i) => {
-        p.update();
-        p.draw();
-        if(p.life <= 0) particles.splice(i, 1);
-    });
-
-    requestAnimationFrame(render);
-}
-
-// --- ЛОГІКА ГРИ ---
-
-mainBtn.addEventListener('click', () => {
-    if(state === 'IDLE') {
-        if(balance < 50) return alert("Мало зірочок!");
-        startCast();
-    } else if(state === 'BITING') {
-        catchProcess();
-    }
-});
-
-function startCast() {
-    balance -= 50;
-    updateStats();
-    state = 'CASTING';
-    targetRodAngle = -10;
-    mainBtn.disabled = true;
-    msgBox.textContent = "Закидаємо...";
-
-    setTimeout(() => {
-        targetRodAngle = 20;
-        state = 'WAITING';
-        mainBtn.textContent = "ЧЕКАЙ...";
-        msgBox.textContent = "Риба десь поруч...";
-        
-        // Рандомний час кльову 10-30 сек
-        let wait = Math.random() * 20000 + 10000;
-        setTimeout(makeBite, wait);
-    }, 1000);
-}
-
-function makeBite() {
-    if(state !== 'WAITING') return;
-    state = 'BITING';
-    mainBtn.disabled = false;
-    mainBtn.textContent = "ТЯГНИ!!!";
-    msgBox.textContent = "КЛЮЄ! ШВИДШЕ!";
-    if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300]);
-
-    // 3 секунди на реакцію
-    setTimeout(() => {
-        if(state === 'BITING') {
-            state = 'IDLE';
-            msgBox.textContent = "Зірвалася... x0";
-            resetUI();
-        }
-    }, 3000);
-}
-
-function catchProcess() {
-    state = 'CATCHING';
-    let fish = getRandFish();
-    let mult = (Math.random() * 20).toFixed(1);
-    let win = Math.floor(fish.base * mult);
-    let weight = (Math.random() * (fish.weight[1] - fish.weight[0]) + fish.weight[0]).toFixed(2);
-
-    balance += win;
-    updateStats();
-
-    // Показати модалку
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('catch-modal').style.display = 'block';
-    document.getElementById('fish-name').textContent = fish.name;
-    document.getElementById('fish-details').textContent = `Вага: ${weight}кг | Множник: x${mult}`;
-    document.getElementById('fish-price').textContent = `+ ${win} ⭐️`;
-
-    state = 'IDLE';
-    resetUI();
-}
-
-function getRandFish() {
-    let r = Math.random();
-    let sum = 0;
-    for(let f of fishDex) {
-        sum += f.chance;
-        if(r <= sum) return f;
-    }
-    return fishDex[0];
-}
-
-function updateStats() {
-    document.getElementById('balance-val').textContent = balance;
-    document.getElementById('p-balance').textContent = balance;
-}
-
-function resetUI() {
-    mainBtn.textContent = "ЗАКИД";
-    mainBtn.disabled = false;
-    targetRodAngle = 30;
-    setTimeout(() => { msgBox.textContent = "Закид: 50 ⭐️"; }, 2000);
-}
-
-// Профіль
-function showProfile() {
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('profile-modal').style.display = 'block';
-}
-
-function hideModals() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('profile-modal').style.display = 'none';
-    document.getElementById('catch-modal').style.display = 'none';
-}
-
-function processWithdraw() {
-    let val = document.getElementById('withdraw-amt').value;
-    if(val < 1000) return alert("Мінімалка 1000 зірочок!");
-    if(val > balance) return alert("Недостатньо коштів!");
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const castBtn = document.getElementById('cast-btn');
+    const fishReveal = document.getElementById('fish-reveal');
     
-    balance -= val;
-    updateStats();
-    alert("Запит прийнято! Очікуйте подарунок у Telegram від бота.");
-    hideModals();
-}
+    let balance = 50;
+    let state = 'IDLE';
+    let width, height;
 
-render();
+    // Дані користувача з ТГ
+    if (tg.initDataUnsafe.user) {
+        document.getElementById('user-name').textContent = tg.initDataUnsafe.user.first_name;
+        document.getElementById('user-id').textContent = tg.initDataUnsafe.user.id;
+        if (tg.initDataUnsafe.user.photo_url) {
+            document.getElementById('user-photo').src = tg.initDataUnsafe.user.photo_url;
+        }
+    }
+
+    // КАЗИНО МАТЕМАТИКА (Шанси сумарно 1.0)
+    // RTP налаштовано так, щоб "Черевик" і "Окунь" (мінусові/дрібні) випадали найчастіше
+    const fishDex = [
+        { id: 'boot', name: 'Старий черевик', icon: '👞', mult: [0, 0], chance: 0.40 },     // 40% - Повний мінус
+        { id: 'perch', name: 'Окунь', icon: '🐟', mult: [0.1, 1.1], chance: 0.35 },        // 35% - Майже завжди мінус або вихід в нуль
+        { id: 'catfish', name: 'Сом', icon: '🐡', mult: [1.1, 2.0], chance: 0.18 },       // 18% - Невеликий плюс
+        { id: 'shark', name: 'Акула', icon: '🦈', mult: [2.0, 5.0], chance: 0.06 },        // 6% - Рідкісний виграш
+        { id: 'gold', name: 'Золота Рибка', icon: '✨', mult: [5.0, 10.0], chance: 0.01 } // 1% - Джекпот
+    ];
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Рендер фону (спрощений для швидкості)
+    function draw() {
+        ctx.fillStyle = '#00b4db'; ctx.fillRect(0,0,width,height*0.5); // Небо
+        ctx.fillStyle = '#005c97'; ctx.fillRect(0,height*0.5,width,height*0.5); // Вода
+        // Місток
+        ctx.fillStyle = '#3e2723';
+        ctx.beginPath(); ctx.moveTo(width*0.2, height); ctx.lineTo(width*0.4, height*0.7);
+        ctx.lineTo(width*0.6, height*0.7); ctx.lineTo(width*0.8, height); ctx.fill();
+        requestAnimationFrame(draw);
+    }
+    draw();
+
+    function handleAction() {
+        if (state === 'IDLE') {
+            if (balance < 50) { tg.showAlert("Недостатньо зірочок!"); return; }
+            startFishing();
+        } else if (state === 'BITING') {
+            catchFish();
+        }
+    }
+
+    function startFishing() {
+        balance -= 50;
+        updateUI();
+        state = 'CASTING';
+        castBtn.disabled = true;
+        document.getElementById('msg-box').textContent = "Закидаємо вудку... (50 ⭐️)";
+
+        setTimeout(() => {
+            state = 'WAITING';
+            castBtn.textContent = "WAIT";
+            // Рандомний час очікування
+            setTimeout(triggerBite, Math.random() * 15000 + 5000);
+        }, 1500);
+    }
+
+    function triggerBite() {
+        if (state !== 'WAITING') return;
+        state = 'BITING';
+        castBtn.disabled = false;
+        castBtn.textContent = "ТЯГНИ!";
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        // 3 сек на реакцію
+        setTimeout(() => { if (state === 'BITING') missFish(); }, 3000);
+    }
+
+    function catchFish() {
+        state = 'RESULT';
+        castBtn.disabled = true;
+        
+        // Математичний розрахунок улову
+        const roll = Math.random();
+        let cumulative = 0;
+        let selectedFish = fishDex[0];
+        
+        for (let f of fishDex) {
+            cumulative += f.chance;
+            if (roll <= cumulative) {
+                selectedFish = f;
+                break;
+            }
+        }
+
+        const multiplier = (Math.random() * (selectedFish.mult[1] - selectedFish.mult[0]) + selectedFish.mult[0]).toFixed(1);
+        const winAmount = Math.floor(50 * multiplier);
+        balance += winAmount;
+
+        // Анімація показу риби
+        document.getElementById('fish-icon').textContent = selectedFish.icon;
+        document.getElementById('fish-name-tag').textContent = `${selectedFish.name} x${multiplier}`;
+        fishReveal.classList.add('show-fish');
+
+        setTimeout(() => {
+            fishReveal.classList.remove('show-fish');
+            updateUI();
+            resetGame();
+            
+            // Показуємо модалку через 3 сек
+            setTimeout(() => {
+                tg.showConfirm(`Ти зловив: ${selectedFish.name}!\nВиграш: ${winAmount} ⭐️`);
+            }, 500);
+        }, 3000);
+    }
+
+    function missFish() {
+        state = 'IDLE';
+        resetGame();
+        tg.showAlert("Риба зірвалася! Спробуй ще.");
+    }
+
+    function resetGame() {
+        state = 'IDLE';
+        castBtn.disabled = false;
+        castBtn.textContent = "ЗАКИД";
+        document.getElementById('msg-box').textContent = "";
+    }
+
+    function updateUI() {
+        document.getElementById('header-balance').textContent = balance;
+        document.getElementById('p-balance').textContent = balance;
+    }
+
+    // Навігація
+    function openProfile() { document.getElementById('profile-page').classList.add('active'); }
+    function closeProfile() { document.getElementById('profile-page').classList.remove('active'); }
+
+    function buyStars() {
+        tg.showAlert("Система оплати: Бот виставить рахунок на зірочки 1:1.");
+        // Тут логіка tg.openInvoice()
+    }
+
+    function withdrawReq() {
+        if (balance < 1000) {
+            tg.showAlert("Мінімальна сума для виводу — 1000 ⭐️");
+        } else {
+            tg.showConfirm(`Вивести ${balance} ⭐️? Подарунок буде надіслано ботом протягом 24 годин.`, (ok) => {
+                if(ok) {
+                    balance = 0;
+                    updateUI();
+                    tg.showAlert("Запит прийнято!");
+                }
+            });
+        }
+    }
 </script>
 </body>
 </html>

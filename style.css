@@ -1,0 +1,89 @@
+body {
+    margin: 0;
+    background: #000b14;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#app {
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    background: linear-gradient(180deg, #001f3f 0%, #00050a 100%);
+}
+
+.ocean {
+    height: 65%;
+    position: relative;
+    border-bottom: 3px solid #4facfe;
+    overflow: hidden;
+    background: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+}
+
+/* Ефект хвиль */
+.ocean::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 123, 255, 0.1);
+    animation: pulse 4s infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 0.2; } to { opacity: 0.5; }
+}
+
+.ui-layer {
+    padding: 20px;
+    text-align: center;
+    background: #000;
+    height: 35%;
+}
+
+button {
+    width: 90%;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 12px;
+    border: none;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#cast-btn {
+    background: linear-gradient(90deg, #ff8c00, #ff0080);
+    color: white;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(255, 0, 128, 0.4);
+}
+
+#cast-btn:disabled {
+    filter: grayscale(1);
+    opacity: 0.6;
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    display: none;
+    z-index: 1000;
+    padding-top: 50px;
+}
+
+.result-popup {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    text-shadow: 0 0 30px #fff;
+    display: none;
+    z-index: 50;
+}

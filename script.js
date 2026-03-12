@@ -1,85 +1,89 @@
 const tg = window.Telegram.WebApp;
 const botToken = "8799917595:AAFyDcvVem0LD5p6j652SbcxBqNqm-veiJ8";
-
 let balance = 50;
-const cost = 50;
-
-// МАТЕМАТИКА КАЗИНО (Шанси в % сумарно 100)
-const lootTable = [
-    { e: '🩲', min: 0, max: 0, chance: 45 },    // 45% повний програш
-    { e: '🐟', min: 0.1, max: 0.8, chance: 35 }, // 35% мізерний виграш (програш частини грошей)
-    { e: '🐠', min: 1.1, max: 1.5, chance: 12 }, // 12% невеликий плюс
-    { e: '🐡', min: 2, max: 4, chance: 5 },      // 5% нормальний улов
-    { e: '🦑', min: 5, max: 8, chance: 2 },      // 2% рідкість
-    { e: '🦈', min: 15, max: 20, chance: 1 }     // 1% ДЖЕКПОТ
-];
-
-function startFishing() {
-    if (balance < cost) {
-        tg.showAlert("Немає Ribacoins! Поповнюй баланс.");
-        return;
-    }
-
-    balance -= cost;
-    updateUI();
-    
-    const btn = document.getElementById('cast-btn');
-    btn.disabled = true;
-    btn.innerText = "ЧЕКАЄМО КЛЬОВУ...";
-
-    // Рандом від 5 до 30 сек
-    const wait = Math.floor(Math.random() * 25000) + 5000;
-
-    setTimeout(() => {
-        // Вібрація
-        tg.HapticFeedback.notificationOccurred('warning');
-        
-        const roll = Math.random() * 100;
-        let sum = 0;
-        let fish = lootTable[0];
-
-        for (let item of lootTable) {
-            sum += item.chance;
-            if (roll <= sum) {
-                fish = item;
-                break;
-            }
-        }
-
-        const mult = (Math.random() * (fish.max - fish.min) + fish.min).toFixed(2);
-        const win = Math.floor(cost * mult);
-        balance += win;
-
-        // Показуємо результат
-        const res = document.getElementById('catch-animation');
-        res.innerText = fish.e;
-        res.style.display = "block";
-        
-        tg.showPopup({
-            title: `Ви зловили: ${fish.e}`,
-            message: `Множник: x${mult}\nВиграш: ${win} 🐟🪙`,
-            buttons: [{type: 'ok'}]
-        });
-
-        setTimeout(() => { res.style.display = "none"; }, 2000);
-        
-        btn.disabled = false;
-        btn.innerText = `ЗАКИДУВАТИ (${cost} 🐟🪙)`;
-        updateUI();
-        
-        // Відправка звіту адміну (тобі) через бота
-        if (win > 200) {
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=ТВІЙ_ID&text=Гравець_${tg.initDataUnsafe.user?.id}_виграв_${win}`);
-        }
-
-    }, wait);
-}
+let isFishing = false;
 
 function updateUI() {
     document.getElementById('balance').innerText = balance;
     document.getElementById('profile-bal').innerText = balance;
 }
 
-// Початкове налаштування TG
+function handleAction() {
+    if (isFishing) return;
+    if (balance < 50) {
+        tg.showAlert("У вас немає монет! Зайдіть в профіль.");
+        return;
+    }
+
+    balance -= 50;
+    updateUI();
+    isFishing = true;
+    
+    const btn = document.getElementById('cast-btn');
+    const float = document.getElementById('float');
+    
+    btn.disabled = true;
+    btn.innerText = "ЧЕКАЄМО...";
+    float.classList.add('float-active');
+
+    // Кльов через 5-30 сек
+    const waitTime = Math.floor(Math.random() * 25000) + 5000;
+
+    setTimeout(() => {
+        // Візуальний кльов (поплавок смикається)
+        float.classList.add('float-bite');
+        
+        // Вібрація (Жужжання)
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('warning');
+            setTimeout(() => tg.HapticFeedback.impactOccurred('heavy'), 200);
+        }
+
+        // Авто-підсікання через 2 сек кльову
+        setTimeout(() => {
+            finishFishing();
+        }, 2000);
+        
+    }, waitTime);
+}
+
+function finishFishing() {
+    const float = document.getElementById('float');
+    const btn = document.getElementById('cast-btn');
+    
+    // МАТЕМАТИКА (Тобі в кишеню)
+    const roll = Math.random() * 100;
+    let result = { e: '🩲', mult: 0 };
+
+    if (roll < 45) result = { e: '🩲', mult: 0 }; // 45% шанс х0
+    else if (roll < 80) result = { e: '🐟', mult: Math.random() * (1.1 - 0.1) + 0.1 }; // 35% шанс х0.1-1.1
+    else if (roll < 92) result = { e: '🐠', mult: Math.random() * (2.2 - 1.2) + 1.2 }; // 12%
+    else if (roll < 97) result = { e: '🐡', mult: Math.random() * (9 - 5) + 5 }; // 5%
+    else if (roll < 99.5) result = { e: '🦑', mult: Math.random() * (13 - 10) + 10 }; // 2.5%
+    else result = { e: '🦈', mult: Math.random() * (20 - 15) + 15 }; // 0.5% шанс на макс
+
+    const win = Math.floor(50 * result.mult);
+    balance += win;
+
+    // Показуємо рибу
+    const display = document.getElementById('fish-display');
+    display.innerText = result.e;
+    display.style.display = 'block';
+    
+    tg.showAlert(`Зловлено: ${result.e}!\nМножник: x${result.mult.toFixed(2)}\nВиграш: ${win} 🐟🪙`);
+
+    setTimeout(() => {
+        display.style.display = 'none';
+        float.classList.remove('float-active', 'float-bite');
+        btn.disabled = false;
+        btn.innerText = "ЗАКИДАТИ ВУДКУ";
+        isFishing = false;
+        updateUI();
+    }, 2000);
+}
+
+function showProfile() { document.getElementById('profile-modal').style.display = 'block'; }
+function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
+
 tg.ready();
-tg.setHeaderColor('#001f3f');
+updateUI();

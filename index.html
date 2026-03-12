@@ -3,55 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fish-X Casino 3D</title>
+    <title>Fish-X Real 3D</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <div class="ocean-container">
-            <div class="sky"></div>
-            <div class="water-surface"></div>
-            <div class="water-depth">
-                <div class="bubble b1"></div>
-                <div class="bubble b2"></div>
-                <div class="fish-shadow"></div>
-            </div>
-            
-            <div id="fishing-rod" class="rod">
-                <div class="line"></div>
-                <div class="hook">🪝</div>
-            </div>
-
-            <div id="catch-animation" class="catch-popup"></div>
+    <div id="game-world">
+        <div class="sky">
+            <div class="sun"></div>
+            <div class="cloud c1">☁️</div>
+            <div class="cloud c2">☁️</div>
         </div>
 
-        <div class="ui-layer">
-            <div class="balance-card">
-                <span class="label">Баланс:</span>
-                <span id="balance">50</span> <span class="currency">🐟🪙</span>
+        <div class="pier"></div>
+
+        <div class="ocean">
+            <div class="water-surface"></div>
+            <div class="waves"></div>
+            
+            <div id="float" class="float-off">
+                <div class="float-top"></div>
+                <div class="float-bottom"></div>
+                <div class="ripples"></div>
+            </div>
+        </div>
+
+        <div class="fishing-setup">
+            <div class="rod-handle"></div>
+            <div id="rod-tip" class="rod-line"></div>
+        </div>
+
+        <div id="fish-display" class="fish-bounce"></div>
+
+        <div class="hud">
+            <div class="top-stats">
+                <div class="coin-badge">🐟🪙 <span id="balance">50</span></div>
             </div>
 
-            <div class="action-zone">
-                <button id="cast-btn" onclick="startFishing()">ЗАКИДУВАТИ (50 🐟🪙)</button>
-            </div>
-
-            <div class="nav-bar">
-                <button onclick="showProfile()">Мій Профіль 👤</button>
+            <div class="controls">
+                <button id="cast-btn" onclick="handleAction()">ЗАКИДАТИ ВУДКУ</button>
+                <button class="profile-min" onclick="showProfile()">👤</button>
             </div>
         </div>
 
         <div id="profile-modal" class="modal">
-            <div class="modal-content">
-                <h2>🏦 Фінансовий Центр</h2>
-                <p>Твій ID: <span id="user-id">Гість</span></p>
-                <div class="stats">
-                    <p>Всього Ribacoins: <b id="profile-bal">50</b></p>
-                </div>
-                <hr>
-                <button class="btn-deposit" onclick="depositStars()">Поповнити (1 ⭐ = 1 🐟🪙)</button>
-                <button class="btn-withdraw" onclick="withdrawGifts()">Вивести у Подарунки 🎁</button>
-                <button class="btn-close" onclick="closeProfile()">Назад до води</button>
+            <div class="modal-box">
+                <h2>🏦 КАСА КАЗИНО</h2>
+                <p>Ваш баланс: <strong id="profile-bal">50</strong> 🐟🪙</p>
+                <button class="gold-btn" onclick="deposit()">КУПИТИ МОНЕТИ (⭐ 1:1)</button>
+                <button class="silver-btn" onclick="withdraw()">ВИВЕСТИ В ПОДАРУНКИ 🎁</button>
+                <button onclick="closeProfile()">ЗАКРИТИ</button>
             </div>
         </div>
     </div>

@@ -3,31 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Реалістична 3D Рибалка</title>
+    <title>3D Fishing Real Money</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="game-container">
-    <div class="sky">
-        <div class="cloud cloud1"></div>
-        <div class="cloud cloud2"></div>
-    </div>
+    <div class="sky"><div class="cloud cloud1"></div></div>
     <div class="forest"></div>
     <div class="water">
-        <div class="ripples"></div>
         <div id="bobber-container">
             <div id="bobber"></div>
             <div id="fish-underwater" class="fish-shadow"></div>
         </div>
     </div>
-    
-    <div class="bridge">
-        <div class="plank"></div>
-        <div class="plank"></div>
-        <div class="plank"></div>
-        <div class="plank"></div>
-    </div>
+    <div class="bridge"><div class="plank"></div><div class="plank"></div></div>
 
     <div id="rod-container">
         <div class="rod-handle"></div>
@@ -35,225 +25,117 @@
         <div id="fishing-line"></div>
     </div>
 
-    <div id="catch-screen" class="hidden">
-        <div class="catch-card">
+    <div id="profile-screen" class="hidden overlay">
+        <div class="card">
+            <h2>Мій Профіль</h2>
+            <p>Баланс: <span id="p-balance">50</span> ⭐️</p>
+            <button onclick="topUp()">Поповнити (1 зірочка = 1 ⭐️)</button>
+            <hr>
+            <input type="number" id="withdraw-amount" placeholder="Сума (мін. 1000)">
+            <button onclick="withdraw()">Вивести подарунком</button>
+            <button class="close-btn" onclick="toggleProfile()">Назад до гри</button>
+        </div>
+    </div>
+
+    <div id="catch-screen" class="hidden overlay">
+        <div class="card">
             <h1 id="catch-title"></h1>
-            <p id="catch-size"></p>
-            <p id="catch-multiplier"></p>
             <p id="catch-value"></p>
-            <button id="btn-collect">Забрати улов</button>
+            <button id="btn-collect">Забрати</button>
         </div>
     </div>
 
     <div class="ui-top">
-        <div class="stat-box">💰 <span id="balance">50</span></div>
+        <div class="stat-box" onclick="toggleProfile()">👤 Профіль: <span id="balance">50</span></div>
     </div>
     
     <div class="ui-bottom">
-        <div id="game-msg">Натисни, щоб закинути ($1)</div>
-        <button id="btn-action">ЗАКИДОК</button>
+        <div id="game-msg">Закид: 50 ⭐️</div>
+        <button id="btn-action">ЗАКИД</button>
     </div>
 </div>
 
 <script>
-    // Основні елементи
-    const btnAction = document.getElementById('btn-action');
-    const btnCollect = document.getElementById('btn-collect');
-    const msg = document.getElementById('game-msg');
-    const balanceEl = document.getElementById('balance');
-    const rod = document.getElementById('rod-container');
-    const bobberCont = document.getElementById('bobber-container');
-    const bobber = document.getElementById('bobber');
-    const fishUnderwater = document.getElementById('fish-underwater');
-    const catchScreen = document.getElementById('catch-screen');
-    const line = document.getElementById('fishing-line');
-
-    // UI для улову
-    const cTitle = document.getElementById('catch-title');
-    const cSize = document.getElementById('catch-size');
-    const cMult = document.getElementById('catch-multiplier');
-    const cValue = document.getElementById('catch-value');
-
-    // Стан гри
     let balance = 50;
-    let gameState = 'idle'; // idle, casting, waiting, biting, result
-    let biteTimeout, catchTimer;
-    let currentFish = null;
-
-    // Дані про риб (name, baseValue, minSize, maxSize, rarity)
+    let gameState = 'idle';
     const fishTypes = [
-        { name: 'Карась', base: 5, minS: 15, maxS: 35, rarity: 0.5, color: '#8b4513' },
-        { name: 'Сом', base: 15, minS: 50, maxS: 120, rarity: 0.3, color: '#333' },
-        { name: 'Акула', base: 50, minS: 180, maxS: 400, rarity: 0.15, color: '#778899' },
-        { name: 'Золота Рибка', base: 100, minS: 10, maxS: 25, rarity: 0.05, color: '#ffd700' }
+        { name: 'Карась', base: 40, rarity: 0.5, color: '#8b4513' },
+        { name: 'Сом', base: 120, rarity: 0.3, color: '#333' },
+        { name: 'Акула', base: 500, rarity: 0.15, color: '#778899' },
+        { name: 'Золота Рибка', base: 2000, rarity: 0.05, color: '#ffd700' }
     ];
 
-    // Оновлення балансу на старті
-    balanceEl.textContent = balance;
+    function updateUI() {
+        document.getElementById('balance').textContent = balance;
+        document.getElementById('p-balance').textContent = balance;
+    }
 
-    // --- Логіка Кнопок ---
+    function toggleProfile() {
+        document.getElementById('profile-screen').classList.toggle('hidden');
+    }
 
-    btnAction.addEventListener('click', () => {
-        if (gameState === 'idle') {
-            tryCast();
+    function topUp() {
+        alert("Перехід до оплати зірочками Telegram...");
+        balance += 100; // Приклад
+        updateUI();
+    }
+
+    function withdraw() {
+        const amt = document.getElementById('withdraw-amount').value;
+        if (amt < 1000) return alert("Мінімум 1000!");
+        if (amt > balance) return alert("Немає стільки!");
+        balance -= amt;
+        updateUI();
+        alert(`Запит відправлено! Бот надішле подарунок на суму ${amt}.`);
+    }
+
+    document.getElementById('btn-action').addEventListener('click', () => {
+        if (gameState === 'idle' && balance >= 50) {
+            balance -= 50;
+            updateUI();
+            startFishing();
         } else if (gameState === 'biting') {
-            attemptCatch();
+            catchFish();
         }
     });
 
-    btnCollect.addEventListener('click', () => {
-        closeCatchScreen();
-    });
-
-    // --- Функції Гри ---
-
-    function tryCast() {
-        if (balance < 1) {
-            msg.textContent = "Недостатньо грошей!";
-            return;
-        }
-
-        balance -= 1;
-        balanceEl.textContent = balance;
+    // Логіка рибалки аналогічна попередній, але з новими цінами
+    function startFishing() {
         gameState = 'casting';
-        
-        btnAction.disabled = true;
-        btnAction.textContent = "...";
-        msg.textContent = "Закидаємо вудку...";
-
-        // Анімація вудки
-        rod.classList.add('casting-animation');
-
-        // З'явлення поплавка після закиду
+        document.getElementById('rod-container').classList.add('casting-animation');
         setTimeout(() => {
-            rod.classList.remove('casting-animation');
-            rod.classList.add('fishing-pose');
-            
-            bobberCont.style.display = 'block';
             gameState = 'waiting';
-            btnAction.textContent = "ЧЕКАЙ";
-            msg.textContent = "Очікуємо на кльов...";
-
-            // Випадковий час до кльову (10-30 сек)
-            const waitTime = Math.random() * (30000 - 10000) + 10000;
-            biteTimeout = setTimeout(triggerBite, waitTime);
-
-        }, 1500); // Час анімації закиду
+            document.getElementById('bobber-container').style.display = 'block';
+            setTimeout(triggerBite, Math.random() * 20000 + 10000);
+        }, 1500);
     }
 
     function triggerBite() {
-        if (gameState !== 'waiting') return;
-
         gameState = 'biting';
-        
-        // Вибираємо рибу
-        currentFish = getRandomFish();
-
-        // UI та візуалізація кльову
-        btnAction.disabled = false;
-        btnAction.textContent = "ТЯГНИ!";
-        btnAction.classList.add('pulse-btn');
-        msg.textContent = "КЛЮЄ! Маєш 3 секунди!";
-
-        bobber.classList.add('bobber-biting');
-        
-        // Показуємо тінь риби під водою
-        fishUnderwater.style.backgroundColor = currentFish.color;
-        fishUnderwater.style.opacity = '0.6';
-        fishUnderwater.classList.add('fish-appear');
-
-        // Вібрація на телефоні
-        if ("vibrate" in navigator) navigator.vibrate([300, 100, 300]);
-
-        // Таймер на 3 секунди
-        catchTimer = setTimeout(fishGotAway, 3000);
+        document.getElementById('bobber').classList.add('bobber-biting');
+        if (navigator.vibrate) navigator.vibrate(300);
+        setTimeout(() => { if (gameState === 'biting') reset(); }, 3000);
     }
 
-    function attemptCatch() {
-        if (gameState !== 'biting') return;
-        clearTimeout(catchTimer); // Зупиняємо таймер втечі
-
-        // Успішно спіймано!
-        generateCatchResult();
+    function catchFish() {
+        const fish = fishTypes[Math.floor(Math.random() * fishTypes.length)];
+        const mult = (Math.random() * 20).toFixed(1);
+        const win = Math.floor(fish.base * mult);
+        balance += win;
+        updateUI();
+        document.getElementById('catch-title').textContent = fish.name;
+        document.getElementById('catch-value').textContent = `Виграш: ${win} ⭐️ (x${mult})`;
+        document.getElementById('catch-screen').classList.remove('hidden');
+        reset();
     }
 
-    function fishGotAway() {
-        if (gameState !== 'biting') return;
-        
-        gameState = 'result';
-        msg.textContent = "Зірвалася! х0";
-        btnAction.textContent = "ЕХ...";
-        btnAction.classList.remove('pulse-btn');
-        
-        fishUnderwater.classList.remove('fish-appear');
-        fishUnderwater.style.opacity = '0';
-        bobber.classList.remove('bobber-biting');
-
-        setTimeout(resetToIdle, 2000);
-    }
-
-    function generateCatchResult() {
-        gameState = 'result';
-        
-        // Розрахунок параметрів
-        const size = (Math.random() * (currentFish.maxS - currentFish.minS) + currentFish.minS).toFixed(1);
-        const multiplier = (Math.random() * 20).toFixed(1);
-        const value = Math.floor(currentFish.base * multiplier);
-
-        // Нарахування грошей
-        balance += value;
-        balanceEl.textContent = balance;
-
-        // Заповнення екрану успіху
-        cTitle.textContent = `Спіймано: ${currentFish.name}!`;
-        cSize.textContent = `Розмір: ${size} см`;
-        cMult.textContent = `Множник: x${multiplier}`;
-        cValue.textContent = `Ціна: $${value}`;
-
-        // Показуємо екран
-        catchScreen.classList.remove('hidden');
-        
-        // Скидаємо стан вудки/поплавка на фоні
-        resetFishingElements();
-    }
-
-    function closeCatchScreen() {
-        catchScreen.classList.add('hidden');
-        resetToIdle();
-    }
-
-    // --- Допоміжні функції ---
-
-    function getRandomFish() {
-        const roll = Math.random();
-        let cumulativeRarity = 0;
-        
-        for (const fish of fishTypes) {
-            cumulativeRarity += fish.rarity;
-            if (roll < cumulativeRarity) {
-                return fish;
-            }
-        }
-        return fishTypes[0]; // Дефолт (Карась)
-    }
-
-    function resetFishingElements() {
-        bobberCont.style.display = 'none';
-        bobber.classList.remove('bobber-biting');
-        fishUnderwater.classList.remove('fish-appear');
-        fishUnderwater.style.opacity = '0';
-        rod.classList.remove('fishing-pose');
-        btnAction.classList.remove('pulse-btn');
-    }
-
-    function resetToIdle() {
-        resetFishingElements();
+    function reset() {
         gameState = 'idle';
-        btnAction.disabled = false;
-        btnAction.textContent = "ЗАКИДОК";
-        msg.textContent = "Натисніть, щоб закинути ($1)";
+        document.getElementById('bobber-container').style.display = 'none';
+        document.getElementById('rod-container').classList.remove('casting-animation');
     }
-</script>
 
+    document.getElementById('btn-collect').onclick = () => document.getElementById('catch-screen').classList.add('hidden');
+</script>
 </body>
 </html>

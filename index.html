@@ -1,407 +1,60 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Fishing 4D Pro - Ultra Realistic</title>
-    <style>
-        /* Заборона будь-якого руху екрана */
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #001a33; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            touch-action: none; position: fixed;
-        }
-        canvas { display: block; width: 100vw; height: 100vh; }
-        
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
-        /* Улучшенный HUD в стиле премиум игр */
-        .hud { 
-            position: absolute; top: 20px; left: 20px; 
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 240, 240, 0.95));
-            color: #1a1a1a; padding: 12px 25px; border-radius: 50px; 
-            border: 3px solid #FFD700; pointer-events: auto; cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,215,0,0.2);
-            display: flex; align-items: center; z-index: 10;
-            transition: transform 0.2s;
-        }
-        .hud:active { transform: scale(0.95); }
-        
-        .btn-main { 
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            padding: 22px 70px; font-size: 28px; font-weight: 900; color: white;
-            background: linear-gradient(to bottom, #4CAF50, #1B5E20); border: 2px solid rgba(255,255,255,0.3); border-radius: 100px;
-            box-shadow: 0 8px 0 #0e350f, 0 20px 40px rgba(0,0,0,0.5); pointer-events: auto; cursor: pointer;
-            transition: all 0.1s; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .btn-main:active:not(:disabled) { transform: translateX(-50%) translateY(6px); box-shadow: 0 2px 0 #0e350f; }
-        .btn-main:disabled { background: #444; box-shadow: 0 8px 0 #222; opacity: 0.6; }
-
-        /* Прогресс-бар */
-        #reel-zone {
-            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
-            width: 30px; height: 280px; background: rgba(0,0,0,0.6);
-            border-radius: 15px; border: 3px solid #FFD700; display: none; pointer-events: none; overflow: hidden;
-            box-shadow: 0 0 20px rgba(255,215,0,0.3);
-        }
-        #reel-progress {
-            position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #FFD700, #00FF00, #FFD700);
-            transition: height 0.1s linear; height: 0%;
-        }
-
-        /* УМЕНЬШЕННАЯ ЦЕНТРАЛЬНАЯ КАТУШКА */
-        #center-reel-container {
-            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
-            width: 180px; height: 180px; display: none; pointer-events: auto; z-index: 500;
-            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5));
-        }
-
-        #profile-page {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #2c3e50 0%, #000000 100%); z-index: 2000; display: none; pointer-events: auto;
-            flex-direction: column; align-items: center; padding-top: 50px;
-        }
-        .p-card {
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); width: 85%; max-width: 400px; padding: 35px;
-            border-radius: 40px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            text-align: center; border: 1px solid rgba(255,255,255,0.1); color: white;
-        }
-        .p-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #FFD700; margin: 0 auto 20px; background-size: cover; }
-        
-        #catch-modal {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%); padding: 40px; border-radius: 40px; width: 80%; max-width: 380px;
-            text-align: center; display: none; pointer-events: auto; z-index: 3000;
-            box-shadow: 0 0 100px rgba(0,0,0,0.7); border: 4px solid #FFD700;
-        }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; z-index: 1500; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fish-X Casino 3D</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body oncontextmenu="return false;">
+<body>
+    <div id="app">
+        <div class="ocean-container">
+            <div class="sky"></div>
+            <div class="water-surface"></div>
+            <div class="water-depth">
+                <div class="bubble b1"></div>
+                <div class="bubble b2"></div>
+                <div class="fish-shadow"></div>
+            </div>
+            
+            <div id="fishing-rod" class="rod">
+                <div class="line"></div>
+                <div class="hook">🪝</div>
+            </div>
 
-<canvas id="gameCanvas"></canvas>
+            <div id="catch-animation" class="catch-popup"></div>
+        </div>
 
-<div id="ui-layer">
-    <div class="hud" onclick="showProfile()">
-        <div id="mini-avatar" style="width:45px; height:45px; border-radius:50%; background:#333; margin-right:12px; border:2px solid #FFD700; background-size:cover;"></div>
-        <div>
-            <span id="u-name" style="font-weight:900; font-size:14px; color:#666;">@fisher</span><br>
-            <span id="balance-val" style="font-size:24px; font-weight:900; color:#2E7D32;">50</span> <span style="color:#FFD700">⭐️</span>
+        <div class="ui-layer">
+            <div class="balance-card">
+                <span class="label">Баланс:</span>
+                <span id="balance">50</span> <span class="currency">🐟🪙</span>
+            </div>
+
+            <div class="action-zone">
+                <button id="cast-btn" onclick="startFishing()">ЗАКИДУВАТИ (50 🐟🪙)</button>
+            </div>
+
+            <div class="nav-bar">
+                <button onclick="showProfile()">Мій Профіль 👤</button>
+            </div>
+        </div>
+
+        <div id="profile-modal" class="modal">
+            <div class="modal-content">
+                <h2>🏦 Фінансовий Центр</h2>
+                <p>Твій ID: <span id="user-id">Гість</span></p>
+                <div class="stats">
+                    <p>Всього Ribacoins: <b id="profile-bal">50</b></p>
+                </div>
+                <hr>
+                <button class="btn-deposit" onclick="depositStars()">Поповнити (1 ⭐ = 1 🐟🪙)</button>
+                <button class="btn-withdraw" onclick="withdrawGifts()">Вивести у Подарунки 🎁</button>
+                <button class="btn-close" onclick="closeProfile()">Назад до води</button>
+            </div>
         </div>
     </div>
-    
-    <div id="reel-zone">
-        <div id="reel-progress"></div>
-    </div>
-
-    <div id="center-reel-container">
-        <canvas id="reelCanvas" width="180" height="180"></canvas>
-    </div>
-
-    <div id="msg-box" style="position:absolute; top: 160px; width:100%; text-align:center; color:white; font-size:28px; font-weight:900; text-shadow:0 4px 20px rgba(0,0,0,1);"></div>
-    <button id="main-action" class="btn-main">ЗАБРОС (50 ⭐️)</button>
-</div>
-
-<div id="profile-page">
-    <div class="p-card">
-        <div class="p-avatar" id="large-avatar"></div>
-        <h1 id="full-u-name" style="margin:0; font-size: 24px;">@fisher</h1>
-        <div style="font-size:40px; font-weight:900; color:#4CAF50; margin: 15px 0;"><span id="p-balance">50</span> ⭐️</div>
-        <p style="margin-top:30px; color:#FFD700; font-weight:bold; cursor:pointer;" onclick="hideProfile()">← НАЗАД К ОЗЕРУ</p>
-    </div>
-</div>
-
-<div id="overlay" class="overlay"></div>
-
-<div id="catch-modal">
-    <h1 id="f-name" style="font-size:32px; margin:0; color:#1a1a1a;">Улов!</h1>
-    <p id="f-info" style="font-size:18px; color:#555; margin:10px 0;"></p>
-    <div id="f-price" style="font-size:50px; font-weight:900; margin:20px 0;"></div>
-    <button class="btn-main" style="position:static; transform:none; width:100%;" onclick="hideModals()">ЗАБРАТЬ</button>
-</div>
-
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const reelCanvas = document.getElementById('reelCanvas');
-const rCtx = reelCanvas.getContext('2d');
-const mainBtn = document.getElementById('main-action');
-const msgBox = document.getElementById('msg-box');
-const reelZone = document.getElementById('reel-zone');
-const reelProgress = document.getElementById('reel-progress');
-const reelContainer = document.getElementById('center-reel-container');
-
-let balance = 50;
-let state = 'IDLE'; 
-let width, height;
-let wavePos = 0;
-let rodDeg = 35;
-let targetDeg = 35;
-let catchAnim = { active: false, x: 0, y: 0, s: 0, fish: null, currentScale: 1.0 };
-
-let currentProgress = 0;
-let lastAngle = 0;
-let totalRotation = 0;
-let isDraggingReel = false;
-
-// База рыб с индивидуальными параметрами отрисовки
-const fishDatabase = [
-    { id: 'boot', name: 'Старый ботинок', min: 0.1, max: 0.5, chance: 0.45, color: '#3e2723', dark: '#1b0000' },
-    { id: 'perch', name: 'Речной окунь', min: 0.5, max: 1.5, chance: 0.35, color: '#4caf50', dark: '#1b5e20' },
-    { id: 'catfish', name: 'Европейский сом', min: 1.5, max: 3.5, chance: 0.12, color: '#263238', dark: '#000000' },
-    { id: 'shark', name: 'Белая акула', min: 4.0, max: 10.0, chance: 0.07, color: '#607d8b', dark: '#102027' },
-    { id: 'gold', name: 'Золотая рыбка', min: 15.0, max: 50.0, chance: 0.01, color: '#ffc107', dark: '#ff6f00' }
-];
-
-function init() {
-    const user = { n: "ProPlayer", a: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky" };
-    document.getElementById('u-name').textContent = "@" + user.n;
-    document.getElementById('full-u-name').textContent = "@" + user.n;
-    document.getElementById('mini-avatar').style.backgroundImage = `url(${user.a})`;
-    document.getElementById('large-avatar').style.backgroundImage = `url(${user.a})`;
-    resize();
-    render();
-    drawReelHandle(0);
-}
-
-function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-
-// РЕАЛИСТИЧНАЯ ОТРИСОВКА КАЖДОГО ТИПА РЫБЫ
-function drawUltraFish(x, y, fish, animScale) {
-    ctx.save();
-    ctx.translate(x, y);
-    // Индивидуальный масштаб выловленной рыбы
-    let finalScale = animScale * catchAnim.currentScale;
-    ctx.scale(finalScale, finalScale);
-    
-    let g = ctx.createLinearGradient(0, -20, 0, 20);
-    g.addColorStop(0, fish.color);
-    g.addColorStop(1, fish.dark);
-    ctx.fillStyle = g;
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-
-    if(fish.id === 'boot') {
-        // Отрисовка сапога (как на фото)
-        ctx.beginPath();
-        ctx.moveTo(-30, 20); ctx.lineTo(30, 20); ctx.lineTo(30, 5);
-        ctx.lineTo(5, 5); ctx.lineTo(5, -30); ctx.lineTo(-30, -30);
-        ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#111'; ctx.fillRect(-30, 20, 60, 5); // Подошва
-    } 
-    else if(fish.id === 'perch') {
-        // Окунь - горбатая спина, полоски
-        ctx.beginPath(); ctx.ellipse(0, 0, 50, 25, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        for(let i=0; i<5; i++) ctx.fillRect(-30 + i*15, -20, 5, 30); // Полоски
-        ctx.beginPath(); ctx.moveTo(-45, 0); ctx.lineTo(-65, -20); ctx.lineTo(-65, 20); ctx.fill(); // Хвост
-    }
-    else if(fish.id === 'catfish') {
-        // Сом - длинное тело, усы
-        ctx.beginPath(); ctx.ellipse(0, 0, 70, 20, 0, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = fish.color; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(60, 5); ctx.quadraticCurveTo(80, 20, 60, 30); ctx.stroke(); // Усы
-        ctx.beginPath(); ctx.moveTo(60, -5); ctx.quadraticCurveTo(80, -20, 60, -30); ctx.stroke();
-    }
-    else if(fish.id === 'shark') {
-        // Акула - острый плавник, характерная форма
-        ctx.beginPath(); 
-        ctx.moveTo(70, 0); ctx.quadraticCurveTo(0, -40, -70, 0);
-        ctx.quadraticCurveTo(0, 40, 70, 0); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(-20, -45); ctx.lineTo(-40, -10); ctx.fill(); // Плавник
-    }
-    else if(fish.id === 'gold') {
-        // Золотая рыбка - пышный хвост
-        ctx.beginPath(); ctx.ellipse(0, 0, 40, 25, 0, 0, Math.PI*2); ctx.fill();
-        ctx.globalAlpha = 0.7;
-        ctx.beginPath(); ctx.moveTo(-35, 0); 
-        ctx.bezierCurveTo(-70, -40, -90, 0, -70, 40); ctx.fill(); // Пышный хвост
-        ctx.globalAlpha = 1.0;
-    }
-
-    // Глаза (кроме ботинка)
-    if(fish.id !== 'boot') {
-        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(35, -5, 6, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(37, -5, 3, 0, Math.PI*2); ctx.fill();
-    }
-    
-    ctx.restore();
-}
-
-// ОТРИСОВКА КАТУШКИ (МЕНЬШЕГО РАЗМЕРА)
-function drawReelHandle(angle) {
-    rCtx.clearRect(0, 0, 180, 180);
-    let cx = 90, cy = 90;
-    
-    // Металлический корпус
-    let grad = rCtx.createRadialGradient(cx, cy, 10, cx, cy, 70);
-    grad.addColorStop(0, '#555'); grad.addColorStop(1, '#111');
-    rCtx.fillStyle = grad;
-    rCtx.beginPath(); rCtx.arc(cx, cy, 65, 0, Math.PI*2); rCtx.fill();
-    rCtx.strokeStyle = '#FFD700'; rCtx.lineWidth = 4; rCtx.stroke();
-    
-    // Детали
-    rCtx.save();
-    rCtx.translate(cx, cy);
-    rCtx.rotate(angle);
-    rCtx.fillStyle = '#FFD700';
-    rCtx.fillRect(0, -6, 75, 12); // Ручка
-    rCtx.fillStyle = '#333';
-    rCtx.beginPath(); rCtx.arc(75, 0, 15, 0, Math.PI*2); rCtx.fill();
-    rCtx.restore();
-}
-
-function getAngle(x, y) {
-    let rect = reelCanvas.getBoundingClientRect();
-    let dx = x - (rect.left + rect.width/2);
-    let dy = y - (rect.top + rect.height/2);
-    return Math.atan2(dy, dx);
-}
-
-const handleReelMove = (e) => {
-    if(!isDraggingReel || state !== 'REELING') return;
-    let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    let currentAngle = getAngle(clientX, clientY);
-    let diff = currentAngle - lastAngle;
-    if (diff > Math.PI) diff -= Math.PI * 2;
-    if (diff < -Math.PI) diff += Math.PI * 2;
-    
-    totalRotation += Math.abs(diff);
-    lastAngle = currentAngle;
-    drawReelHandle(currentAngle);
-    
-    currentProgress = Math.min(100, totalRotation * 3.0); 
-    reelProgress.style.height = currentProgress + '%';
-    if(currentProgress >= 100) finishCatch();
-};
-
-reelCanvas.addEventListener('mousedown', (e) => { isDraggingReel = true; lastAngle = getAngle(e.clientX, e.clientY); });
-reelCanvas.addEventListener('touchstart', (e) => { isDraggingReel = true; lastAngle = getAngle(e.touches[0].clientX, e.touches[0].clientY); });
-window.addEventListener('mousemove', handleReelMove);
-window.addEventListener('touchmove', handleReelMove);
-window.addEventListener('mouseup', () => isDraggingReel = false);
-window.addEventListener('touchend', () => isDraggingReel = false);
-
-function render() {
-    ctx.clearRect(0, 0, width, height);
-
-    // НЕБО
-    let skyG = ctx.createLinearGradient(0, 0, 0, height*0.5);
-    skyG.addColorStop(0, '#001a33'); skyG.addColorStop(1, '#004e92');
-    ctx.fillStyle = skyG; ctx.fillRect(0, 0, width, height*0.5);
-
-    // ВОДА
-    wavePos += 0.03;
-    let waterG = ctx.createLinearGradient(0, height*0.5, 0, height);
-    waterG.addColorStop(0, '#006994'); waterG.addColorStop(1, '#001a33');
-    ctx.fillStyle = waterG; ctx.fillRect(0, height*0.5, width, height*0.5);
-
-    // ВОЛНЫ (НА ВЕСЬ ЭКРАН)
-    ctx.lineWidth = 2;
-    for(let j=0; j<8; j++) {
-        ctx.strokeStyle = `rgba(255,255,255,${0.1 - j*0.01})`;
-        ctx.beginPath();
-        for(let x=-20; x < width + 20; x += 30) {
-            let y = height*0.52 + j*50 + Math.sin(x*0.01 + wavePos + j)*15;
-            if(x === -20) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-    }
-
-    // УДОЧКА (ПОЛНЫЙ ВИД)
-    rodDeg += (targetDeg - rodDeg) * 0.1;
-    let rx = width * 0.95; let ry = height * 1.0;
-    let rLen = Math.min(width, height) * 0.75;
-    let tx = rx + Math.cos(rodDeg * Math.PI/180) * -rLen;
-    let ty = ry + Math.sin(rodDeg * Math.PI/180) * -rLen;
-
-    ctx.strokeStyle = '#111'; ctx.lineWidth = 12; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(tx, ty); ctx.stroke();
-    
-    if(state !== 'IDLE') {
-        let bx = width*0.4;
-        let by = height*0.65 + Math.sin(wavePos)*5;
-        if(state === 'BITING' || state === 'REELING') by += Math.sin(Date.now()*0.05)*20;
-        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(bx, by); ctx.stroke();
-        ctx.fillStyle = '#ff4444'; ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI*2); ctx.fill();
-    }
-
-    if(catchAnim.active) {
-        drawUltraFish(catchAnim.x, catchAnim.y, catchAnim.fish, catchAnim.s);
-        catchAnim.y -= 4;
-        catchAnim.s += (1.5 - catchAnim.s) * 0.05;
-    }
-    requestAnimationFrame(render);
-}
-
-mainBtn.addEventListener('click', () => {
-    if(state === 'IDLE') {
-        if(balance < 50) return alert("Мало зірок!");
-        balance -= 50; updateStats();
-        state = 'CASTING'; targetDeg = -10;
-        mainBtn.disabled = true; msgBox.textContent = "ЗАКИДАЄМО...";
-        setTimeout(() => { targetDeg = 25; state = 'WAITING'; mainBtn.textContent = "ЧЕКАЙ...";
-            setTimeout(startBite, Math.random() * 5000 + 4000);
-        }, 1000);
-    } else if(state === 'BITING') {
-        startReelingMode();
-    }
-});
-
-function startBite() {
-    if(state !== 'WAITING') return;
-    state = 'BITING'; mainBtn.disabled = false; mainBtn.textContent = "ТЯГНИ!";
-    msgBox.textContent = "КЛЮЄ!";
-}
-
-function startReelingMode() {
-    state = 'REELING'; mainBtn.disabled = true;
-    msgBox.textContent = "КРУТИ КАТУШКУ!";
-    reelZone.style.display = 'block'; reelContainer.style.display = 'block';
-    currentProgress = 0; totalRotation = 0;
-}
-
-function finishCatch() {
-    state = 'WINNING'; reelZone.style.display = 'none'; reelContainer.style.display = 'none';
-    msgBox.textContent = "ЄЄЄ!";
-    let r = Math.random(); let fish = fishDatabase[0]; let s = 0;
-    for(let f of fishDatabase) { s += f.chance; if(r <= s) { fish = f; break; } }
-    
-    // ГЕНЕРАЦІЯ ВИПАДКОВОГО РОЗМІРУ (від 0.7 до 1.5 від бази)
-    let randomSizeMod = 0.7 + Math.random() * 0.8;
-    catchAnim.currentScale = randomSizeMod;
-
-    let m = (randomSizeMod * (fish.max - fish.min) + fish.min).toFixed(1);
-    let win = Math.floor(50 * m);
-    catchAnim = { ...catchAnim, active: true, x: width * 0.45, y: height * 0.6, s: 0.1, fish: fish };
-    
-    setTimeout(() => { balance += win; updateStats(); showModal(fish, m, win); }, 2000);
-}
-
-function showModal(fish, m, win) {
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('catch-modal').style.display = 'block';
-    document.getElementById('f-name').textContent = fish.name;
-    document.getElementById('f-info').textContent = `Вага/Множник: x${m}`;
-    document.getElementById('f-price').textContent = `+ ${win} ⭐️`;
-    document.getElementById('f-price').style.color = win > 0 ? "#2E7D32" : "#555";
-}
-
-function resetUI() { state = 'IDLE'; mainBtn.disabled = false; mainBtn.textContent = "ЗАБРОС (50 ⭐️)"; targetDeg = 35; catchAnim.active = false; }
-function hideModals() { document.getElementById('overlay').style.display = 'none'; document.getElementById('catch-modal').style.display = 'none'; resetUI(); }
-function showProfile() { document.getElementById('profile-page').style.display = 'flex'; updateStats(); }
-function hideProfile() { document.getElementById('profile-page').style.display = 'none'; }
-function updateStats() { document.getElementById('balance-val').textContent = balance; document.getElementById('p-balance').textContent = balance; }
-
-init();
-</script>
+    <script src="script.js"></script>
 </body>
 </html>

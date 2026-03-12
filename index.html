@@ -3,300 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultra Real Fishing Casino</title>
+    <title>Fish Casino Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --gold: #ffd700; --danger: #ff4d4d; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
-
-        /* Ігровий світ */
-        #game-canvas {
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; font-family: sans-serif; }
+        
+        /* Реалістичний фон озера */
+        #viewport {
             position: relative;
             width: 100%;
             height: 100vh;
-            background: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center center;
+            background: url('https://w.forfun.com/fetch/bc/bc67e51086055047f087611a14138e60.jpeg') center center;
             background-size: cover;
-            transition: filter 0.5s;
         }
 
-        /* Фото-реалістична вода поверх фону */
-        .water-overlay {
+        /* Вода поверх фону */
+        .water-layer {
             position: absolute;
-            bottom: 0; width: 100%; height: 55%;
-            background: linear-gradient(180deg, rgba(30, 60, 90, 0.4) 0%, rgba(0, 10, 20, 0.8) 100%);
-            backdrop-filter: blur(1px);
+            bottom: 0; width: 100%; height: 50%;
+            background: linear-gradient(180deg, rgba(0,50,100,0.2) 0%, rgba(0,20,40,0.6) 100%);
             z-index: 2;
         }
 
-        .waves {
+        /* HUD */
+        .header {
             position: absolute;
-            bottom: 0; width: 100%; height: 55%;
-            background: url('https://www.transparenttextures.com/patterns/water.png');
-            opacity: 0.3;
-            animation: drift 20s infinite linear;
-            z-index: 3;
+            top: 15px; width: 100%;
+            display: flex; justify-content: space-around;
+            z-index: 100;
+        }
+        .ui-badge {
+            background: rgba(0,0,0,0.8);
+            color: gold;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid gold;
+            font-weight: bold;
         }
 
-        @keyframes drift { from { background-position: 0 0; } to { background-position: 500px 500px; } }
-
-        /* Вудка від першої особи */
-        .hand-hold {
+        /* Вудка */
+        #rod {
             position: absolute;
-            bottom: -50px; right: -20px;
-            width: 500px; height: 600px;
-            background: url('https://i.imgur.com/6XmS7D5.png') no-repeat; /* Потрібен прозорий PNG вудки */
+            bottom: -20px; right: -50px;
+            width: 450px; height: 500px;
+            background: url('https://i.imgur.com/GisLzO3.png') no-repeat;
             background-size: contain;
-            z-index: 10;
+            z-index: 50;
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
             pointer-events: none;
-            transform: rotate(-5deg);
-            transition: transform 0.2s;
         }
-
-        .rod-bending { animation: bend 0.5s infinite alternate !important; }
-        @keyframes bend { from { transform: rotate(-5deg) translateY(0); } to { transform: rotate(-12deg) translateY(20px); } }
+        .bend { transform: rotate(-15deg) translateY(30px); }
 
         /* Поплавок */
-        #bobber {
+        #float {
             position: absolute;
-            left: 50%; top: 60%;
-            width: 12px; height: 40px;
-            background: linear-gradient(to bottom, red 50%, white 50%);
+            left: 50%; top: 65%;
+            width: 10px; height: 35px;
+            background: linear-gradient(red 50%, white 50%);
             border-radius: 5px;
-            z-index: 5;
             display: none;
-            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            z-index: 10;
         }
+        .float-active { display: block; animation: wave 2s infinite ease-in-out; }
+        .float-bite { animation: sink 0.4s infinite alternate !important; }
 
-        .bobber-active { display: block !important; animation: bob 2s infinite ease-in-out; }
-        .bobber-bite { animation: sink 0.3s infinite !important; }
-        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
-        @keyframes sink { 0% { transform: translateY(8px); } 100% { transform: translateY(35px); opacity: 0.7; } }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+        @keyframes sink { to { transform: translateY(40px); opacity: 0.5; } }
 
-        /* UI */
-        .hud {
+        /* Результат - ОДНА РИБА */
+        #fish-result {
             position: absolute;
-            top: 20px; left: 20px; right: 20px;
-            display: flex; justify-content: space-between;
-            z-index: 20;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 150px;
+            z-index: 200;
+            transition: 0.5s;
         }
 
-        .stat-box {
-            background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
-            border-radius: 12px;
-            border: 1px solid var(--gold);
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .main-btn {
+        /* Кнопки */
+        .btn-main {
             position: absolute;
             bottom: 40px; left: 50%;
             transform: translateX(-50%);
-            padding: 20px 50px;
+            padding: 20px 60px;
+            background: #ff4500;
+            color: white;
+            border: 4px solid #fff;
+            border-radius: 50px;
             font-size: 22px;
             font-weight: 900;
-            color: white;
-            background: linear-gradient(45deg, #2ecc71, #27ae60);
-            border: 3px solid #fff;
-            border-radius: 50px;
-            cursor: pointer;
-            z-index: 30;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100;
         }
 
-        /* Екран профілю на весь екран */
-        #profile-screen {
+        /* Профіль */
+        #profile {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
-            z-index: 100;
-            display: none;
-            color: white;
-            padding: 40px 20px;
-            box-sizing: border-box;
-        }
-
-        .profile-header { border-bottom: 2px solid var(--gold); padding-bottom: 20px; margin-bottom: 30px; text-align: center; }
-        .balance-large { font-size: 48px; color: var(--gold); margin: 20px 0; }
-        
-        .menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .menu-btn {
-            padding: 20px;
-            background: #333;
-            border: none;
-            border-radius: 15px;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: left;
-            display: flex; justify-content: space-between;
-        }
-
-        .btn-withdraw { background: #2c3e50; border: 1px solid #34495e; }
-        .btn-deposit { background: var(--gold); color: #000; }
-
-        /* Риба вилітає */
-        #catch-result {
-            position: absolute;
-            top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-size: 120px; z-index: 50;
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #111; color: #fff;
+            display: none; z-index: 1000;
+            text-align: center; padding-top: 50px;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-canvas">
-        <div class="hud">
-            <div class="stat-box">💰 <span id="bal-val">50</span> 🐟🪙</div>
-            <button class="stat-box" style="cursor:pointer" onclick="openProfile()">ПРОФІЛЬ 👤</button>
-        </div>
-
-        <div class="water-overlay"></div>
-        <div class="waves"></div>
-        <div id="bobber"></div>
-        <div id="catch-result">🐟</div>
-        
-        <div id="rod" class="hand-hold"></div>
-
-        <button id="action-btn" class="main-btn" onclick="startCast()">ЗАКИНУТИ (50 🐟🪙)</button>
+<div id="viewport">
+    <div class="header">
+        <div class="ui-badge">💰 <span id="bal-hud">50</span> 🐟🪙</div>
+        <div class="ui-badge" onclick="toggleProfile(true)" style="cursor:pointer">ПРОФІЛЬ 👤</div>
     </div>
 
-    <div id="profile-screen">
-        <div class="profile-header">
-            <h1>ФІНАНСОВИЙ ЦЕНТР</h1>
-            <p>ID: <span id="tg-id">Завантаження...</span></p>
-        </div>
+    <div class="water-layer"></div>
+    <div id="float"></div>
+    <div id="fish-result">🐟</div>
+    <div id="rod"></div>
 
-        <div style="text-align: center;">
-            <p>ДОСТУПНО ДЛЯ ВИВОДУ:</p>
-            <div class="balance-large"><span id="prof-bal">50</span> 🐟🪙</div>
-        </div>
+    <button id="action-btn" class="btn-main" onclick="processAction()">ЗАКИДАТИ</button>
+</div>
 
-        <div class="menu-grid">
-            <button class="menu-btn btn-deposit" onclick="tgAction('deposit')">
-                ПОПОВНИТИ <span>1 ⭐ = 1 🐟🪙</span>
-            </button>
-            <button class="menu-btn btn-withdraw" onclick="tgAction('withdraw')">
-                ВИВЕСТИ В ПОДАРУНКИ 🎁
-            </button>
-            <button class="menu-btn" onclick="closeProfile()" style="background: var(--danger);">
-                НАЗАД ДО ОЗЕРА
-            </button>
-        </div>
-    </div>
+<div id="profile">
+    <h1>МІЙ АККАУНТ</h1>
+    <h2 style="color:gold; font-size: 50px;"><span id="bal-prof">50</span> 🐟🪙</h2>
+    <button onclick="alert('Stars Payment...')" style="padding: 15px; width: 80%; margin: 10px;">ПОПОВНИТИ (⭐ 1:1)</button><br>
+    <button onclick="alert('Withdrawal...')" style="padding: 15px; width: 80%; margin: 10px;">ВИВЕСТИ ПОДАРУНКОМ 🎁</button><br>
+    <button onclick="toggleProfile(false)" style="padding: 15px; width: 80%; margin: 40px; background: red; color: white;">НАЗАД</button>
+</div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
+<script>
+    const tg = window.Telegram.WebApp;
+    let balance = 50;
+    let state = 'idle'; // idle, fishing, biting, result
+    
+    function updateUI() {
+        document.getElementById('bal-hud').innerText = balance;
+        document.getElementById('bal-prof').innerText = balance;
+    }
 
-        let balance = 50;
-        let isActive = false;
-        const botToken = "8799917595:AAFyDcvVem0LD5p6j652SbcxBqNqm-veiJ8";
+    function processAction() {
+        const btn = document.getElementById('action-btn');
+        const float = document.getElementById('float');
+        const rod = document.getElementById('rod');
+        const fishBox = document.getElementById('fish-result');
 
-        const loot = [
-            { e: '🩲', m: 0, c: 45 },    { e: '🐟', m: 0.8, c: 30 },
-            { e: '🐠', m: 1.5, c: 12 },   { e: '🐡', m: 4, c: 7 },
-            { e: '🦑', m: 8, c: 4 },    { e: '🦞', m: 12, c: 1.5 },
-            { e: '🦈', m: 20, c: 0.5 }
-        ];
-
-        function updateUI() {
-            document.getElementById('bal-val').innerText = balance.toFixed(0);
-            document.getElementById('prof-bal').innerText = balance.toFixed(0);
-            document.getElementById('tg-id').innerText = tg.initDataUnsafe.user?.id || "Гість";
-        }
-
-        function startCast() {
-            if (isActive || balance < 50) return;
+        if (state === 'idle') {
+            if (balance < 50) return tg.showAlert("Мало грошей!");
             
             balance -= 50;
             updateUI();
-            isActive = true;
-
-            const btn = document.getElementById('action-btn');
-            const bobber = document.getElementById('bobber');
-            const rod = document.getElementById('rod');
-
-            btn.style.display = 'none';
-            bobber.classList.add('bobber-active');
+            state = 'fishing';
+            btn.innerText = "ЧЕКАЄМО...";
+            btn.disabled = true;
+            float.className = 'float-active';
             
-            // Ефект закидання
-            rod.style.transform = "rotate(-25deg) translateY(50px)";
-            setTimeout(() => rod.style.transform = "rotate(-5deg)", 500);
-
-            // Рандомний час кльову 5-30 сек
-            const wait = Math.floor(Math.random() * 25000) + 5000;
-
+            // Кльов через 5-30 сек
             setTimeout(() => {
-                // КЛЬОВ
-                bobber.classList.add('bobber-bite');
-                rod.classList.add('rod-bending');
-                tg.HapticFeedback.notificationOccurred('warning');
-
-                // Вікно можливості підсікти (3 сек)
+                state = 'biting';
+                float.className = 'float-active float-bite';
+                rod.className = 'bend';
+                btn.disabled = false;
                 btn.innerText = "ПІДСІКАТИ!!!";
-                btn.style.display = 'block';
-                btn.style.background = 'var(--danger)';
-                btn.onclick = () => catchFish();
+                tg.HapticFeedback.notificationOccurred('warning');
+            }, Math.random() * 25000 + 5000);
 
-            }, wait);
-        }
-
-        function catchFish() {
-            const btn = document.getElementById('action-btn');
-            const bobber = document.getElementById('bobber');
-            const rod = document.getElementById('rod');
-            const resultImg = document.getElementById('catch-result');
-
+        } else if (state === 'biting') {
+            state = 'result';
+            btn.style.display = 'none';
+            float.className = '';
+            rod.className = '';
+            
+            // Математика (шанси)
             const roll = Math.random() * 100;
-            let sum = 0;
-            let fish = loot[0];
+            let res = { e: '🩲', m: 0 };
+            if (roll > 99.5) res = { e: '🦈', m: 20 };
+            else if (roll > 95) res = { e: '🦑', m: 11 };
+            else if (roll > 85) res = { e: '🐡', m: 7 };
+            else if (roll > 70) res = { e: '🐠', m: 1.8 };
+            else if (roll > 40) res = { e: '🐟', m: 0.6 };
+            else res = { e: '🩲', m: 0 };
 
-            for (let f of loot) {
-                sum += f.c;
-                if (roll <= sum) { fish = f; break; }
-            }
-
-            const win = Math.floor(50 * fish.m);
+            const win = Math.floor(50 * res.m);
             balance += win;
 
-            // Анімація успіху
-            resultImg.innerText = fish.e;
-            resultImg.style.transform = "translate(-50%, -50%) scale(2)";
-            tg.HapticFeedback.impactOccurred('heavy');
-
+            // Показати ОДНУ рибу
+            fishBox.innerText = res.e;
+            fishBox.style.transform = "translate(-50%, -50%) scale(1)";
+            
             setTimeout(() => {
-                resultImg.style.transform = "translate(-50%, -50%) scale(0)";
-                bobber.classList.remove('bobber-active', 'bobber-bite');
-                rod.classList.remove('rod-bending');
-                btn.innerText = "ЗАКИНУТИ (50 🐟🪙)";
-                btn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
-                btn.onclick = startCast;
-                isActive = false;
+                fishBox.style.transform = "translate(-50%, -50%) scale(0)";
+                btn.style.display = 'block';
+                btn.innerText = "ЗАКИДАТИ";
+                state = 'idle';
                 updateUI();
             }, 3000);
         }
+    }
 
-        function openProfile() { document.getElementById('profile-screen').style.display = 'block'; }
-        function closeProfile() { document.getElementById('profile-screen').style.display = 'none'; }
+    function toggleProfile(show) {
+        document.getElementById('profile').style.display = show ? 'block' : 'none';
+    }
 
-        function tgAction(type) {
-            if (type === 'withdraw' && balance < 100) {
-                tg.showAlert("Мінімальний вивід 100 монет!");
-                return;
-            }
-            tg.showPopup({
-                title: 'Платіжна система',
-                message: type === 'deposit' ? 'Відкрити оплату Telegram Stars?' : 'Вивести кошти на аккаунт?',
-                buttons: [{type: 'ok', text: 'Так'}, {type: 'cancel', text: 'Ні'}]
-            });
-        }
-
-        updateUI();
-    </script>
+    updateUI();
+    tg.expand();
+</script>
 </body>
 </html>

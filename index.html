@@ -26,12 +26,14 @@
         .btn-red { background: #ff4d4d; color: #fff; margin-top: 40px; }
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: gold; font-size: 24px; font-weight: bold; }
         
-        /* НОВІ СТИЛІ КАЗИНО */
         .jackpot-banner { position: absolute; top: 100px; width: 100%; text-align: center; color: #fff; font-weight: bold; font-size: 24px; text-shadow: 0 0 10px gold; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .combo-counter { position: absolute; right: 20px; top: 150px; color: #ff00ff; font-size: 40px; font-weight: 900; transform: rotate(15deg); display: none; }
         .paytable { margin: 20px auto; width: 90%; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; text-align: left; font-size: 14px; }
         .pay-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        
+        /* ЕЛЕМЕНТИ ПІДКАЗОК */
+        .hint-text { position: absolute; bottom: 130px; width: 100%; text-align: center; color: #aaa; font-style: italic; font-size: 14px; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -52,6 +54,9 @@
         <div class="badge" onclick="toggleProfile(true)" style="cursor:pointer">👤 ПРОФІЛЬ</div>
     </div>
     <div id="fish-wrap" class="fish-popup">🐟<br><span id="win-amount" class="profit-text"></span></div>
+    
+    <div class="hint-text" id="game-hint">Натисніть кнопку, щоб почати гру</div>
+
     <div class="controls">
         <div style="color: white; margin-bottom: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">СТАВКА: 50 🐟🪙</div>
         <button id="action-btn" onclick="handleGame()">Закинути вудку</button>
@@ -65,30 +70,28 @@
     </div>
     
     <div class="paytable">
-        <h3 style="text-align: center; color: gold;">ТАБЛИЦЯ ВИПЛАТ (множник x Ставка)</h3>
-        <div class="pay-row"><span>🦈 АКУЛА (MEGA WIN)</span> <span>x100</span></div>
-        <div class="pay-row"><span>🦞 ЛОБСТЕР</span> <span>x20</span></div>
-        <div class="pay-row"><span>🦑 КАЛЬМАР</span> <span>x10</span></div>
-        <div class="pay-row"><span>🐡 РИБА-КУЛЯ</span> <span>x5</span></div>
-        <div class="pay-row"><span>🐠 ТРОПІЧНА РИБА</span> <span>x2</span></div>
-        <div class="pay-row"><span>🐟 ЗВИЧАЙНА РИБА</span> <span>x0.8</span></div>
-        <div class="pay-row"><span>🩲 СТАРИЙ ЧЕРЕВИК</span> <span>x0</span></div>
+        <h3 style="text-align: center; color: gold;">ШАНСИ ТА ВИПЛАТИ (RTP 94%)</h3>
+        <div class="pay-row"><span>🦈 АКУЛА (0.1%)</span> <span>x100</span></div>
+        <div class="pay-row"><span>🦞 ЛОБСТЕР (1%)</span> <span>x20</span></div>
+        <div class="pay-row"><span>🦑 КАЛЬМАР (3%)</span> <span>x10</span></div>
+        <div class="pay-row"><span>🐡 РИБА-КУЛЯ (8%)</span> <span>x5</span></div>
+        <div class="pay-row"><span>🐠 ТРОПІЧНА РИБА (15%)</span> <span>x2</span></div>
+        <div class="pay-row"><span>🐟 ЗВИЧАЙНА РИБА (30%)</span> <span>x0.8</span></div>
+        <div class="pay-row"><span>🩲 ЧЕРЕВИК / ПУСТО (42.9%)</span> <span>x0</span></div>
     </div>
 
     <button class="menu-btn btn-gold" onclick="tg.showAlert('Поповнення скоро буде доступне!')">ПОПОВНИТИ (1⭐ = 1🪙)</button>
     <button class="menu-btn btn-dark" onclick="tg.showAlert('Вивід монет у подарунки активовано!')">ВИВЕСТИ ПОДАРУНКИ 🎁</button>
     <button class="menu-btn btn-red" onclick="toggleProfile(false)">ПОВЕРНУТИСЯ ДО ОЗЕРА</button>
-    <div style="height: 50px;"></div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    let balance = 50;
+    let balance = 1050; // Згідно твого скріншоту
     let gameState = 'idle';
     let combo = 0;
-    let jackpot = 50000;
+    let jackpot = 50055;
 
-    // --- 3D ДВИЖОК (THREE.JS) ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x00ccff); 
     scene.fog = new THREE.Fog(0x00ccff, 10, 150);
@@ -97,7 +100,6 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
@@ -106,9 +108,8 @@
     sun.position.set(50, 100, 50);
     sun.castShadow = true;
     scene.add(sun);
-
-    // Додаємо амбієнтне світло для глибини
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
 
     // --- ПТАШКИ ---
@@ -121,260 +122,201 @@
         const bird = new THREE.Mesh(birdGeo, birdMat);
         bird.position.set(Math.random()*100-50, 25 + Math.random()*15, -40 - Math.random()*60);
         scene.add(bird);
-        birds.push({ mesh: bird, speed: 0.08 + Math.random()*0.1, wingSpeed: 0.15 + Math.random()*0.25 });
+        birds.push({ mesh: bird, speed: 0.08 + Math.random()*0.1 });
     }
     for(let i=0; i<12; i++) createBird();
 
-    // --- ОБ'ЄКТИ СВІТУ ---
+    // --- ВОДА ТА ЗЕМЛЯ ---
     const waterGeo = new THREE.PlaneGeometry(1000, 1000, 128, 128);
-    const waterMat = new THREE.MeshPhongMaterial({
-        color: 0x0066ff,
-        transparent: true,
-        opacity: 0.85,
-        shininess: 300,
-        specular: 0xffffff
-    });
+    const waterMat = new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.85, shininess: 300 });
     const water = new THREE.Mesh(waterGeo, waterMat);
     water.rotation.x = -Math.PI / 2;
     water.position.y = -2; 
     scene.add(water);
 
-    // Додаємо "пісок" під воду для реалізму
-    const groundGeo = new THREE.PlaneGeometry(1000, 1000);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x224422 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -10;
-    scene.add(ground);
-
-    // Місток (Вкорочений)
     const bridgeGroup = new THREE.Group();
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.8 });
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x4e342e });
     for(let i = 0; i < 6; i++) {
-        const plankGeo = new THREE.BoxGeometry(5, 0.4, 1.2);
-        const plank = new THREE.Mesh(plankGeo, woodMat);
+        const plank = new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 1.2), woodMat);
         plank.position.z = -i * 1.3 + 10; 
-        plank.receiveShadow = true;
-        plank.castShadow = true;
         bridgeGroup.add(plank);
     }
     bridgeGroup.position.y = -1.8;
     scene.add(bridgeGroup);
 
-    // РУКИ РИБАЛКИ
-    const handsGroup = new THREE.Group();
-    const handMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-    const armGeo = new THREE.CylinderGeometry(0.15, 0.2, 1.5);
-    const leftArm = new THREE.Mesh(armGeo, handMat);
-    leftArm.rotation.x = Math.PI / 2.5;
-    leftArm.position.set(-0.6, -0.8, 4);
-    const rightArm = new THREE.Mesh(armGeo, handMat);
-    rightArm.rotation.x = Math.PI / 2.5;
-    rightArm.position.set(0.6, -0.8, 4);
-    handsGroup.add(leftArm, rightArm);
-    scene.add(handsGroup);
+    // --- НОВІ РЕАЛІСТИЧНІ РУКИ (З ПАЛЬЦЯМИ) ---
+    const handsRoot = new THREE.Group();
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.7 });
 
-    // Вудка (Корекція масштабу)
+    function createDetailedHand(side) {
+        const hand = new THREE.Group();
+        const palm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.4), skinMat);
+        hand.add(palm);
+
+        // Пальці, що охоплюють вудку
+        for(let i=0; i<4; i++) {
+            const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25), skinMat);
+            finger.position.set(side * 0.15, 0.05, -0.15 + i*0.1);
+            finger.rotation.z = Math.PI / 2;
+            hand.add(finger);
+        }
+        
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 1.5), skinMat);
+        arm.position.y = -0.8;
+        arm.rotation.x = -0.2;
+        hand.add(arm);
+        
+        return hand;
+    }
+
+    const leftHand = createDetailedHand(-1);
+    leftHand.position.set(-0.5, -0.8, 4.2);
+    const rightHand = createDetailedHand(1);
+    rightHand.position.set(0.5, -0.8, 4.2);
+    
+    handsRoot.add(leftHand, rightHand);
+    scene.add(handsRoot);
+
+    // --- ВУДКА (ПРИВ'ЯЗАНА ДО РУК) ---
     const rodGroup = new THREE.Group();
-    const rodBodyGeo = new THREE.CylinderGeometry(0.02, 0.08, 6);
-    const rodBody = new THREE.Mesh(rodBodyGeo, new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 }));
+    const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.07, 7), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 }));
     rodBody.position.y = 3;
     rodGroup.add(rodBody);
     
-    // Котушка на вудці
-    const reelGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.3);
-    const reel = new THREE.Mesh(reelGeo, new THREE.MeshStandardMaterial({ color: 0x333333 }));
+    const reel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.4), new THREE.MeshStandardMaterial({ color: 0x333333 }));
     reel.rotation.z = Math.PI/2;
-    reel.position.y = 0.8;
+    reel.position.y = 1.2;
     rodGroup.add(reel);
 
-    rodGroup.rotation.x = -Math.PI / 4; 
-    rodGroup.position.set(0.6, -0.4, 3.5); 
+    rodGroup.rotation.x = -Math.PI / 3.5; 
+    rodGroup.position.set(0, -0.5, 4); 
     scene.add(rodGroup);
 
-    // ПОПЛАВОК ТА ЛЕСКА
-    const linePoints = [new THREE.Vector3(0, 6, 0), new THREE.Vector3(0, -2, -8)];
+    // --- ЛЕСКА ТА ПОПЛАВОК ---
+    const linePoints = [new THREE.Vector3(0, 6.5, 0), new THREE.Vector3(0, -2, -10)];
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
-    const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 });
-    const line = new THREE.Line(lineGeo, lineMat);
+    const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true }));
     rodGroup.add(line); 
 
-    const floatGroup = new THREE.Group();
-    const floatTopGeo = new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI * 2, 0, Math.PI/2);
-    const floatTopMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const floatTop = new THREE.Mesh(floatTopGeo, floatTopMat);
-    
-    const floatBottomGeo = new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI * 2, Math.PI/2, Math.PI/2);
-    const floatBottomMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const floatBottom = new THREE.Mesh(floatBottomGeo, floatBottomMat);
-    
-    floatGroup.add(floatTop, floatBottom);
-    floatGroup.position.set(0.6, -1.9, -5); 
-    scene.add(floatGroup);
+    const float = new THREE.Group();
+    const fTop = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+    float.add(fTop);
+    float.position.set(0, -1.9, -6);
+    scene.add(float);
 
-    // --- ЕФЕКТИ БРИЗОК (ЧАСТИНКИ) ---
-    const particleCount = 20;
+    camera.position.set(0, 1.5, 9);
+    camera.lookAt(0, 0, -5);
+
+    // --- ЕФЕКТИ ЧАСТИНОК ---
     const particles = new THREE.Group();
-    const partGeo = new THREE.SphereGeometry(0.03, 4, 4);
-    const partMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    for(let i=0; i<particleCount; i++) {
-        const p = new THREE.Mesh(partGeo, partMat);
+    for(let i=0; i<30; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.04), new THREE.MeshBasicMaterial({ color: 0xffffff }));
         p.visible = false;
         particles.add(p);
     }
     scene.add(particles);
 
-    camera.position.set(0, 1, 8);
-    camera.lookAt(0, -1, -5);
-
-    function createSplash(x, z) {
+    function triggerSplash() {
         particles.children.forEach(p => {
             p.visible = true;
-            p.position.set(x, -1.9, z);
-            p.userData.velocity = new THREE.Vector3(
-                (Math.random() - 0.5) * 0.2,
-                Math.random() * 0.3,
-                (Math.random() - 0.5) * 0.2
-            );
+            p.position.set(float.position.x, -1.9, float.position.z);
+            p.userData.v = new THREE.Vector3((Math.random()-0.5)*0.3, Math.random()*0.4, (Math.random()-0.5)*0.3);
         });
-        setTimeout(() => particles.children.forEach(p => p.visible = false), 600);
-    }
-
-    function playSound(freq, duration, type = 'sine') {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            osc.stop(audioCtx.currentTime + duration);
-        } catch(e) {}
+        setTimeout(() => particles.children.forEach(p => p.visible = false), 700);
     }
 
     function animate() {
         requestAnimationFrame(animate);
         const time = Date.now() * 0.001;
         
-        // Оновлення води
-        const verts = water.geometry.attributes.position.array;
-        for (let i = 2; i < verts.length; i += 3) {
-            verts[i] = Math.sin(time * 1.2 + i * 0.5) * 0.12;
+        const v = water.geometry.attributes.position.array;
+        for (let i = 2; i < v.length; i += 3) {
+            v[i] = Math.sin(time * 1.5 + i) * 0.1;
         }
         water.geometry.attributes.position.needsUpdate = true;
 
-        // Поплавок гойдається
-        floatGroup.position.y = -1.9 + Math.sin(time * 2) * 0.08;
-        floatGroup.rotation.z = Math.sin(time) * 0.1;
+        float.position.y = -1.9 + Math.sin(time * 2.5) * 0.05;
         
-        // Пташки
         birds.forEach(b => {
             b.mesh.position.x += b.speed;
-            b.mesh.rotation.z = Math.sin(time * 15) * 0.5;
-            if(b.mesh.position.x > 80) b.mesh.position.x = -80;
+            if(b.mesh.position.x > 60) b.mesh.position.x = -60;
         });
 
-        // Частинки бризок
         particles.children.forEach(p => {
             if(p.visible) {
-                p.position.add(p.userData.velocity);
-                p.userData.velocity.y -= 0.01;
+                p.position.add(p.userData.v);
+                p.userData.v.y -= 0.015;
             }
         });
 
-        // Стан клювання
-        if (gameState === 'biting') {
-            floatGroup.position.y -= 0.4;
-            rodGroup.rotation.x = -Math.PI / 4 + Math.sin(time * 25) * 0.07;
-            handsGroup.position.y = Math.sin(time * 25) * 0.03;
-            if(Math.random() > 0.8) createSplash(floatGroup.position.x, floatGroup.position.z);
-        }
+        // Анімація тримання вудки (дихання)
+        handsRoot.position.y = Math.sin(time * 2) * 0.02;
+        rodGroup.position.y = -0.5 + Math.sin(time * 2) * 0.02;
+        rodGroup.rotation.z = Math.sin(time) * 0.01;
 
-        // Динамічне небо (цикл)
-        const skyGlow = (Math.sin(time * 0.1) + 1) / 2;
-        scene.background.setHSL(0.6, 0.8, 0.2 + skyGlow * 0.4);
-        scene.fog.color.setHSL(0.6, 0.8, 0.2 + skyGlow * 0.4);
+        if (gameState === 'biting') {
+            float.position.y -= 0.5;
+            rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 30) * 0.05;
+            if(Math.random() > 0.85) triggerSplash();
+        }
 
         renderer.render(scene, camera);
     }
     
-    let loadVal = 0;
-    const loadInt = setInterval(() => {
-        loadVal += 10;
-        document.getElementById('load-bar').style.width = loadVal + '%';
-        if(loadVal >= 100) {
-            clearInterval(loadInt);
-            document.getElementById('loading').style.display = 'none';
-        }
-    }, 100);
-
     animate();
+    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1000);
 
     function updateUI() {
         document.getElementById('bal-hud').innerText = balance.toLocaleString();
         document.getElementById('bal-prof').innerText = balance.toLocaleString();
-        jackpot += Math.floor(Math.random() * 10);
+        jackpot += Math.floor(Math.random()*5);
         document.getElementById('jackpot-hud').innerText = `JACKPOT: ${jackpot.toLocaleString()} 🐟🪙`;
     }
 
+    // --- КАЗИНО ЛОГІКА (RTP ТА ШАНСИ) ---
     function handleGame() {
         const btn = document.getElementById('action-btn');
+        const hint = document.getElementById('game-hint');
         const fishWrap = document.getElementById('fish-wrap');
-        const winAmountText = document.getElementById('win-amount');
-        const comboUI = document.getElementById('combo-ui');
 
         if (gameState === 'idle') {
-            if (balance < 50) return tg.showAlert("Мало монет для ставки! Потрібно 50 🐟🪙");
+            if (balance < 50) return tg.showAlert("Поповніть баланс!");
             
             balance -= 50; 
             updateUI();
             gameState = 'fishing';
-            btn.innerText = "ЧЕКАЄМО..."; btn.disabled = true;
-            btn.style.filter = "hue-rotate(180deg)";
+            btn.innerText = "ОЧІКУВАННЯ..."; btn.disabled = true;
+            hint.innerText = "Тихо... риба десь поруч...";
             
-            playSound(200, 0.5, 'square');
-
-            // Рандомний час очікування від 3 до 8 секунд
+            // Час очікування збільшено для азарту
             setTimeout(() => {
                 if(gameState !== 'fishing') return;
                 gameState = 'biting';
                 btn.disabled = false; btn.innerText = "ПІДСІКАЙ!";
-                btn.style.background = "linear-gradient(45deg, #ff0000, #990000)";
-                btn.style.filter = "none";
+                btn.style.background = "linear-gradient(45deg, #ff0000, #880000)";
+                hint.innerText = "КЛЮЄ! ТЯГНИ ШВИДШЕ!";
                 tg.HapticFeedback.notificationOccurred('warning');
-            }, Math.random() * 5000 + 3000);
+            }, Math.random() * 7000 + 3000);
 
         } else if (gameState === 'biting') {
             gameState = 'result'; 
             btn.style.display = 'none';
-            playSound(800, 0.2, 'sawtooth');
-            setTimeout(()=>playSound(1200, 0.4, 'sine'), 100);
+            hint.innerText = "Витягуємо здобич...";
 
             const roll = Math.random() * 100;
             let res = { e: '🩲', m: 0, n: 'ЧЕРЕВИК' }; 
+
+            // Складна математика виграшу
+            if (roll > 99.9) res = { e: '🦈', m: 100, n: 'ЛЕГЕНДАРНА АКУЛА!' };
+            else if (roll > 98.5) res = { e: '🦞', m: 20, n: 'КОРОЛІВСЬКИЙ ЛОБСТЕР' };
+            else if (roll > 95) res = { e: '🦑', m: 10, n: 'ГІГАНТСЬКИЙ КАЛЬМАР' };
+            else if (roll > 87) res = { e: '🐡', m: 5, n: 'РИБА-КУЛЯ' };
+            else if (roll > 70) res = { e: '🐠', m: 2, n: 'ТРОПІЧНА РИБА' };
+            else if (roll > 40) res = { e: '🐟', m: 0.8, n: 'ЗВИЧАЙНА РИБА' };
+
+            if(res.m > 0) combo++; else combo = 0;
             
-            // Математика казино
-            if (roll > 99.7) res = { e: '🦈', m: 100, n: 'MEGA WIN!' };
-            else if (roll > 97) res = { e: '🦞', m: 20, n: 'BIG WIN!' };
-            else if (roll > 88) res = { e: '🦑', m: 10, n: 'NICE!' };
-            else if (roll > 75) res = { e: '🐡', m: 5, n: 'GOOD' };
-            else if (roll > 55) res = { e: '🐠', m: 2, n: 'OK' };
-            else if (roll > 30) res = { e: '🐟', m: 0.8, n: 'MINI' };
-
-            // Система комбо (якщо зловив підряд не черевик)
-            if(res.m > 0) {
-                combo++;
-                if(combo > 1) {
-                    comboUI.innerText = `x${combo} COMBO!`;
-                    comboUI.style.display = 'block';
-                }
-            } else {
-                combo = 0;
-                comboUI.style.display = 'none';
-            }
-
-            let win = Math.floor(50 * res.m * (1 + combo*0.1));
+            let win = Math.floor(50 * res.m);
             balance += win;
             
             fishWrap.innerHTML = `${res.e}<br><span class="profit-text">+${win} 🐟🪙</span><div style="font-size:20px">${res.n}</div>`;
@@ -387,15 +329,15 @@
                 btn.style.display = 'inline-block';
                 btn.innerText = "Закинути вудку";
                 btn.style.background = "linear-gradient(45deg, #ff4e50, #f9d423)";
+                hint.innerText = "Готові до нового закиду?";
                 gameState = 'idle'; 
                 updateUI();
-            }, 3500);
+            }, 3000);
         }
     }
 
     function toggleProfile(show) {
         document.getElementById('profile-screen').style.display = show ? 'block' : 'none';
-        if(show) tg.HapticFeedback.impactOccurred('medium');
     }
 
     window.addEventListener('resize', () => {
@@ -404,10 +346,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Налаштування Telegram
     tg.expand();
-    tg.ready();
-    tg.headerColor = '#000000';
     updateUI();
 </script>
 </body>

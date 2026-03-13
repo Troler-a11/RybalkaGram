@@ -37,7 +37,7 @@
 
 <div id="loading">
     <div style="margin-bottom: 20px; font-size: 50px;">🎰</div>
-    ЗАВАНТАЖЕННЯ РЕАЛІСТИЧНОГО СВІТУ...
+    ЗАВАНТАЖЕННЯ...
     <div id="load-progress" style="width: 200px; height: 10px; background: #333; margin-top: 20px; border-radius: 5px; overflow: hidden;">
         <div id="load-bar" style="width: 0%; height: 100%; background: gold; transition: 0.3s;"></div>
     </div>
@@ -64,7 +64,7 @@
     </div>
     
     <div class="paytable">
-        <h3 style="text-align: center; color: gold;">ШАНСИ ТА ВИПЛАТИ (RTP 94%)</h3>
+        <h3 style="text-align: center; color: gold;">ШАНСИ ТА ВИПЛАТИ</h3>
         <div class="pay-row"><span>🦈 АКУЛА (0.1%)</span> <span>x100</span></div>
         <div class="pay-row"><span>🦞 ЛОБСТЕР (1.0%)</span> <span>x20</span></div>
         <div class="pay-row"><span>🦑 КАЛЬМАР (3.0%)</span> <span>x10</span></div>
@@ -74,14 +74,14 @@
         <div class="pay-row"><span>🩲 ЧЕРЕВИК / ПУСТО (42.9%)</span> <span>x0</span></div>
     </div>
 
-    <button class="menu-btn btn-gold" onclick="tg.showAlert('Поповнення скоро буде доступне!')">ПОПОВНИТИ (1⭐ = 1🪙)</button>
-    <button class="menu-btn btn-dark" onclick="tg.showAlert('Вивід монет у подарунки активовано!')">ВИВЕСТИ ПОДАРУНКИ 🎁</button>
-    <button class="menu-btn btn-red" onclick="toggleProfile(false)">ПОВЕРНУТИСЯ ДО ОЗЕРА</button>
+    <button class="menu-btn btn-gold" onclick="tg.showAlert('Поповнення скоро!')">ПОПОВНИТИ</button>
+    <button class="menu-btn btn-dark" onclick="tg.showAlert('Вивід монет активовано!')">ВИВЕСТИ 🎁</button>
+    <button class="menu-btn btn-red" onclick="toggleProfile(false)">НАЗАД</button>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    let balance = 1050; // Згідно з твоїм скріншотом
+    let balance = 1050; 
     let gameState = 'idle';
     let combo = 0;
     let jackpot = 50055;
@@ -136,65 +136,48 @@
     bridgeGroup.position.y = -1.8;
     scene.add(bridgeGroup);
 
-    // --- НОВА СИСТЕМА РУК (АНАТОМІЧНО ПРАВИЛЬНА) ---
+    // --- СИСТЕМА РУК (ПОВЕРНУТІ НА 30 ГРАДУСІВ) ---
     const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.7 });
     const armGeo = new THREE.CylinderGeometry(0.12, 0.15, 1.8);
-    
-    const armsRoot = new THREE.Group();
     
     const leftArmGroup = new THREE.Group();
     const leftShoulder = new THREE.Mesh(new THREE.SphereGeometry(0.2), skinMat);
     leftShoulder.position.y = 0.9;
     const leftArm = new THREE.Mesh(armGeo, skinMat);
     leftArmGroup.add(leftShoulder, leftArm);
-    leftArmGroup.position.set(-0.7, 0, 0); // Позиція відносно центру рибалки
-    leftArmGroup.rotation.set(-0.6, -0.1, 0); // Кути згинання плеча
+    leftArmGroup.position.set(-0.8, 0, 0); 
+    leftArmGroup.rotation.set(-0.6, 0.52, 0); // Повернуто на ~30 градусів (0.52 rad)
 
     const rightArmGroup = new THREE.Group();
     const rightShoulder = new THREE.Mesh(new THREE.SphereGeometry(0.2), skinMat);
     rightShoulder.position.y = 0.9;
     const rightArm = new THREE.Mesh(armGeo, skinMat);
     rightArmGroup.add(rightShoulder, rightArm);
-    rightArmGroup.position.set(0.7, 0, 0);
-    rightArmGroup.rotation.set(-0.6, 0.1, 0);
+    rightArmGroup.position.set(0.8, 0, 0);
+    rightArmGroup.rotation.set(-0.6, -0.52, 0); // Повернуто на ~30 градусів всередину
 
-    // Долоні
     const palmGeo = new THREE.BoxGeometry(0.25, 0.12, 0.3);
     const leftPalm = new THREE.Mesh(palmGeo, skinMat);
-    leftPalm.position.set(-0.02, -0.95, 0.1);
+    leftPalm.position.set(0, -0.95, 0.1);
     leftArmGroup.add(leftPalm);
 
     const rightPalm = new THREE.Mesh(palmGeo, skinMat);
-    rightPalm.position.set(0.02, -0.95, 0.1);
+    rightPalm.position.set(0, -0.95, 0.1);
     rightArmGroup.add(rightPalm);
 
-    // Пальці, що охоплюють вудку
-    for(let i=0; i<4; i++) {
-        const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2), skinMat);
-        finger.position.set(-0.13, -0.95, -0.15 + i*0.1);
-        finger.rotation.z = Math.PI/2;
-        leftArmGroup.add(finger);
-        
-        const rFinger = finger.clone();
-        rFinger.position.set(0.13, -0.95, -0.15 + i*0.1);
-        rightArmGroup.add(rFinger);
-    }
-
-    // Коренева точка для рук (рибалка)
     const fishermanBody = new THREE.Group();
     fishermanBody.add(leftArmGroup, rightArmGroup);
-    fishermanBody.position.set(0, -1.0, 5.0); // Позиція відносно камери
+    fishermanBody.position.set(0, -1.0, 5.0); 
     scene.add(fishermanBody);
 
-    // --- ОНОВЛЕНА ВУДКА (ПРИВ'ЯЗАНА ДО РУК) ---
+    // --- ОДНА ЦЕНТРАЛЬНА ВУДКА ---
     const rodGroup = new THREE.Group();
     const rodBodyGeo = new THREE.CylinderGeometry(0.02, 0.06, 7);
     const rodBodyMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 });
     const rodBody = new THREE.Mesh(rodBodyGeo, rodBodyMat);
-    rodBody.position.y = 3.2; // Трохи вище
+    rodBody.position.y = 3.2; 
     rodGroup.add(rodBody);
     
-    // Котушка ( reel )
     const reelGroup = new THREE.Group();
     const reelSideGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.05);
     const reelMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6 });
@@ -209,19 +192,14 @@
     reelGroup.add(reelL, reelR, reelBody);
     rodGroup.add(reelGroup);
 
-    // Ручка (grip)
     const gripGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.5);
     const gripMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 1.0 });
     const grip = new THREE.Mesh(gripGeo, gripMat);
     grip.position.y = 0.5;
     rodGroup.add(grip);
 
-    // Вудка тепер прикріплена до рук
-    leftPalm.add(rodGroup.clone()); // Це не спрацює правильно, Three.js не копіює дітей. Створимо вудку в руках.
-    
-    // Створимо вудку окремо і прив'яжемо анімацію
     const finalRod = rodGroup;
-    finalRod.rotation.x = -Math.PI / 3.5; // Спрямована в воду
+    finalRod.rotation.x = -Math.PI / 3.5; 
     finalRod.position.set(0, -0.6, 5.2);
     scene.add(finalRod);
 
@@ -251,24 +229,20 @@
         water.geometry.attributes.position.needsUpdate = true;
 
         float.position.y = -1.9 + Math.sin(time * 2.5) * 0.06;
-        float.rotation.z = Math.sin(time) * 0.1;
         
         birds.forEach(b => {
             b.mesh.position.x += b.speed;
             if(b.mesh.position.x > 70) b.mesh.position.x = -70;
         });
 
-        // Синхронізація рук і вудки (для легкого гойдання)
         const idleSway = Math.sin(time) * 0.02;
-        leftArmGroup.rotation.x = -0.6 + idleSway;
-        rightArmGroup.rotation.x = -0.6 - idleSway;
         finalRod.position.y = -0.6 + idleSway;
-        fishermanBody.position.y = -1.0 + Math.sin(time * 2) * 0.01; // Світло дихання
+        fishermanBody.position.y = -1.0 + idleSway;
 
         if (gameState === 'biting') {
             float.position.y -= 0.5;
             finalRod.rotation.x = -Math.PI / 3.5 + Math.sin(time * 30) * 0.07;
-            fishermanBody.position.y += Math.sin(time * 30) * 0.03; // Руки трясуться
+            fishermanBody.position.y += Math.sin(time * 30) * 0.03; 
         }
 
         renderer.render(scene, camera);
@@ -289,7 +263,7 @@
         const fishWrap = document.getElementById('fish-wrap');
 
         if (gameState === 'idle') {
-            if (balance < 50) return tg.showAlert("Мало грошей!");
+            if (balance < 50) return tg.showAlert("Мало монет!");
             balance -= 50; updateUI();
             gameState = 'fishing';
             btn.innerText = "ОЧІКУВАННЯ..."; btn.disabled = true;
@@ -311,12 +285,12 @@
             const roll = Math.random() * 100;
             let res = { e: '🩲', m: 0, n: 'ЧЕРЕВИК' }; 
 
-            if (roll > 99.9) res = { e: '🦈', m: 100, n: 'ЛЕГЕНДАРНА АКУЛА!' };
-            else if (roll > 98.9) res = { e: '🦞', m: 20, n: 'BIG WIN: ЛОБСТЕР' };
-            else if (roll > 95.9) res = { e: '🦑', m: 10, n: 'КОРОЛІВСЬКИЙ КАЛЬМАР' };
+            if (roll > 99.9) res = { e: '🦈', m: 100, n: 'АКУЛА!' };
+            else if (roll > 98.9) res = { e: '🦞', m: 20, n: 'ЛОБСТЕР' };
+            else if (roll > 95.9) res = { e: '🦑', m: 10, n: 'КАЛЬМАР' };
             else if (roll > 87.9) res = { e: '🐡', m: 5, n: 'РИБА-КУЛЯ' };
-            else if (roll > 72.9) res = { e: '🐠', m: 2, n: 'ТРОПІЧНА РИБА' };
-            else if (roll > 42.9) res = { e: '🐟', m: 0.8, n: 'ЗВИЧАЙНА РИБА' };
+            else if (roll > 72.9) res = { e: '🐠', m: 2, n: 'ТРОПІЧНА' };
+            else if (roll > 42.9) res = { e: '🐟', m: 0.8, n: 'РИБА' };
 
             if(res.m > 0) combo++; else combo = 0;
             if(combo > 1) { document.getElementById('combo-ui').innerText = `x${combo} COMBO!`; document.getElementById('combo-ui').style.display='block'; }
@@ -325,7 +299,7 @@
             let win = Math.floor(50 * res.m * (1 + combo*0.1));
             balance += win;
             
-            fishWrap.innerHTML = `${res.e}<br><span class="profit-text">+${win} 🐟🪙</span><div style="font-size:20px">${res.n}</div>`;
+            fishWrap.innerHTML = `${res.e}<br><span class="profit-text">+${win}</span>`;
             fishWrap.style.transform = "translate(-50%, -50%) scale(1)";
             
             tg.HapticFeedback.impactOccurred('heavy');

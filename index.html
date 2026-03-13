@@ -28,7 +28,7 @@
 </head>
 <body>
 
-<div id="loading">ГОТУЄМО СНАСТІ...</div>
+<div id="loading">ЗАВАНТАЖЕННЯ РЕАЛІСТИЧНОГО СВІТУ...</div>
 
 <div class="ui-layer">
     <div class="stats">
@@ -56,9 +56,10 @@
     let balance = 50;
     let gameState = 'idle';
 
+    // --- 3D ДВИЖОК (THREE.JS) ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x00d2ff); // Яскраве блакитне небо
-    scene.fog = new THREE.Fog(0x00d2ff, 10, 150);
+    scene.background = new THREE.Color(0x00ccff); // Чітке блакитне небо
+    scene.fog = new THREE.Fog(0x00ccff, 10, 150);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -66,10 +67,10 @@
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
     scene.add(hemiLight);
-    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-    sun.position.set(30, 50, 20);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(50, 100, 50);
     sun.castShadow = true;
     scene.add(sun);
 
@@ -77,20 +78,20 @@
     const birds = [];
     function createBird() {
         const birdGeo = new THREE.BufferGeometry();
-        const v = new Float32Array([0,0,0, -0.2,0.1,-0.1, 0.2,0.1,-0.1]);
+        const v = new Float32Array([0,0,0, -0.3,0.1,-0.1, 0.3,0.1,-0.1]);
         birdGeo.setAttribute('position', new THREE.BufferAttribute(v, 3));
         const birdMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
         const bird = new THREE.Mesh(birdGeo, birdMat);
-        bird.position.set(Math.random()*100-50, 25 + Math.random()*10, -60 - Math.random()*40);
+        bird.position.set(Math.random()*100-50, 25 + Math.random()*15, -40 - Math.random()*60);
         scene.add(bird);
-        birds.push({ mesh: bird, speed: 0.08 + Math.random()*0.1 });
+        birds.push({ mesh: bird, speed: 0.08 + Math.random()*0.1, wingSpeed: 0.15 + Math.random()*0.25 });
     }
     for(let i=0; i<12; i++) createBird();
 
-    // --- ВОДА ---
-    const waterGeo = new THREE.PlaneGeometry(600, 600, 100, 100);
+    // --- ОБ'ЄКТИ СВІТУ ---
+    const waterGeo = new THREE.PlaneGeometry(1000, 1000, 120, 120);
     const waterMat = new THREE.MeshPhongMaterial({
-        color: 0x0055ff,
+        color: 0x0066ff,
         transparent: true,
         opacity: 0.8,
         shininess: 250,
@@ -101,58 +102,56 @@
     water.position.y = -2; 
     scene.add(water);
 
-    // --- МІСТОК (ВКОРОЧЕНИЙ) ---
+    // Місток (Вкорочений)
     const bridgeGroup = new THREE.Group();
     const woodMat = new THREE.MeshStandardMaterial({ color: 0x4e342e });
     for(let i = 0; i < 6; i++) {
-        const plankGeo = new THREE.BoxGeometry(5, 0.25, 1);
+        const plankGeo = new THREE.BoxGeometry(5, 0.3, 1.2);
         const plank = new THREE.Mesh(plankGeo, woodMat);
-        plank.position.z = -i * 1.1 + 8; 
+        plank.position.z = -i * 1.3 + 10; 
         plank.receiveShadow = true;
         bridgeGroup.add(plank);
     }
     bridgeGroup.position.y = -1.8;
     scene.add(bridgeGroup);
 
-    // --- РУКИ ТА ВУДКА ---
-    const playerGroup = new THREE.Group();
-    
-    // Руки (Спрощені блоки)
-    const armMat = new THREE.MeshStandardMaterial({ color: 0xe0ac69 });
-    const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), armMat);
-    leftArm.position.set(-0.4, -0.3, 0.5);
-    const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), armMat);
-    rightArm.position.set(0.4, -0.3, 0.5);
-    playerGroup.add(leftArm, rightArm);
+    // РУКИ РИБАЛКИ
+    const handsGroup = new THREE.Group();
+    const handMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+    const armGeo = new THREE.CylinderGeometry(0.15, 0.2, 1.5);
+    const leftArm = new THREE.Mesh(armGeo, handMat);
+    leftArm.rotation.x = Math.PI / 2.5;
+    leftArm.position.set(-0.6, -0.8, 4);
+    const rightArm = new THREE.Mesh(armGeo, handMat);
+    rightArm.rotation.x = Math.PI / 2.5;
+    rightArm.position.set(0.6, -0.8, 4);
+    handsGroup.add(leftArm, rightArm);
+    scene.add(handsGroup);
 
-    // Вудка
-    const rodMat = new THREE.MeshStandardMaterial({ color: 0x212121 });
-    const rodBase = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 3), rodMat);
-    rodBase.rotation.x = Math.PI / 2.5;
-    rodBase.position.set(0.3, 0.1, -0.5);
-    playerGroup.add(rodBase);
+    // Вудка (Корекція масштабу)
+    const rodGroup = new THREE.Group();
+    const rodBodyGeo = new THREE.CylinderGeometry(0.02, 0.06, 5);
+    const rodBody = new THREE.Mesh(rodBodyGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
+    rodBody.position.y = 2.5;
+    rodGroup.add(rodBody);
+    rodGroup.rotation.x = -Math.PI / 4; 
+    rodGroup.position.set(0.6, -0.4, 3.5); 
+    scene.add(rodGroup);
 
-    // Леска
-    const lineGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0.3, 1.2, -1.8),
-        new THREE.Vector3(0, -1.8, -6)
-    ]);
+    // ПОПЛАВОК ТА ЛЕСКА
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,5,0), new THREE.Vector3(0,-5,0)]);
     const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-    const fishingLine = new THREE.Line(lineGeo, lineMat);
-    playerGroup.add(fishingLine);
+    const line = new THREE.Line(lineGeo, lineMat);
+    rodGroup.add(line); 
 
-    // Поплавок
-    const floatGeo = new THREE.SphereGeometry(0.1, 8, 8);
+    const floatGeo = new THREE.SphereGeometry(0.08, 8, 8);
     const floatMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const float = new THREE.Mesh(floatGeo, floatMat);
-    float.position.set(0, -1.9, -6);
+    float.position.set(0.6, -1.9, -5); // Поплавок на воді
     scene.add(float);
 
-    scene.add(playerGroup);
-    playerGroup.position.set(0, 0, 3.5);
-
-    camera.position.set(0, 0, 5); 
-    camera.lookAt(0, 0, -5);
+    camera.position.set(0, 0, 6);
+    camera.lookAt(0, -1, -10);
 
     function playSound(freq, duration) {
         try {
@@ -160,10 +159,8 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
             osc.stop(audioCtx.currentTime + duration);
         } catch(e) {}
     }
@@ -172,39 +169,30 @@
         requestAnimationFrame(animate);
         const time = Date.now() * 0.001;
         
-        const vertices = water.geometry.attributes.position.array;
-        for (let i = 2; i < vertices.length; i += 3) {
-            vertices[i] = Math.sin(time * 1.5 + i) * 0.08;
+        const verts = water.geometry.attributes.position.array;
+        for (let i = 2; i < verts.length; i += 3) {
+            verts[i] = Math.sin(time * 1.5 + i) * 0.15;
         }
         water.geometry.attributes.position.needsUpdate = true;
 
+        float.position.y = -1.9 + Math.sin(time * 1.5) * 0.1;
+        
         birds.forEach(b => {
             b.mesh.position.x += b.speed;
-            b.mesh.position.y += Math.sin(time * 2) * 0.02;
+            b.mesh.rotation.z = Math.sin(time * 12) * 0.6;
             if(b.mesh.position.x > 70) b.mesh.position.x = -70;
         });
 
-        // Анімація поплавка на воді
-        float.position.y = -1.9 + Math.sin(time * 2) * 0.05;
-
         if (gameState === 'biting') {
-            playerGroup.rotation.x = Math.sin(time * 20) * 0.03;
             float.position.y -= 0.3; // Поплавок тоне
-        } else {
-            playerGroup.rotation.x = Math.sin(time * 0.5) * 0.01;
+            rodGroup.rotation.x = -Math.PI / 4 + Math.sin(time * 20) * 0.05;
+            handsGroup.position.y = Math.sin(time * 20) * 0.02;
         }
-
-        // Оновлення ліски
-        const rodTip = new THREE.Vector3(0.3, 1.2, -1.8).applyMatrix4(playerGroup.matrixWorld);
-        const linePositions = fishingLine.geometry.attributes.position.array;
-        linePositions[0] = rodTip.x; linePositions[1] = rodTip.y; linePositions[2] = rodTip.z;
-        linePositions[3] = float.position.x; linePositions[4] = float.position.y; linePositions[5] = float.position.z;
-        fishingLine.geometry.attributes.position.needsUpdate = true;
 
         renderer.render(scene, camera);
     }
     
-    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1000);
+    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1200);
     animate();
 
     function updateUI() {
@@ -217,48 +205,42 @@
         const fishWrap = document.getElementById('fish-wrap');
 
         if (gameState === 'idle') {
-            if (balance < 50) { tg.showAlert("Мало монет!"); return; }
-            balance -= 50;
-            updateUI();
+            if (balance < 50) return tg.showAlert("Треба гроші!");
+            balance -= 50; updateUI();
             gameState = 'fishing';
-            btn.innerText = "ЧЕКАЄМО...";
-            btn.disabled = true;
-            playSound(300, 0.3);
+            btn.innerText = "ОЧІКУВАННЯ..."; btn.disabled = true;
+            playSound(250, 0.4);
 
             setTimeout(() => {
                 gameState = 'biting';
-                btn.disabled = false;
-                btn.innerText = "ПІДСІКАЙ!!!";
-                btn.style.background = "linear-gradient(45deg, #ff0000, #990000)";
+                btn.disabled = false; btn.innerText = "ПІДСІКАЙ!";
+                btn.style.background = "red";
                 tg.HapticFeedback.notificationOccurred('warning');
             }, Math.random() * 12000 + 4000);
 
         } else if (gameState === 'biting') {
-            gameState = 'result';
-            btn.style.display = 'none';
-            playSound(500, 0.5);
+            gameState = 'result'; btn.style.display = 'none';
+            playSound(600, 0.6);
 
             const roll = Math.random() * 100;
             let res = { e: '🩲', m: 0 }; 
-            if (roll > 99.5) res = { e: '🦈', m: 50 };
-            else if (roll > 96) res = { e: '🦞', m: 15 };
-            else if (roll > 88) res = { e: '🦑', m: 8 };
-            else if (roll > 75) res = { e: '🐡', m: 5 };
-            else if (roll > 50) res = { e: '🐠', m: 1.8 };
-            else if (roll > 25) res = { e: '🐟', m: 0.6 };
-            else res = { e: '🩲', m: 0 };
+            if (roll > 99.5) res = { e: '🦈', m: 100 };
+            else if (roll > 96) res = { e: '🦞', m: 20 };
+            else if (roll > 85) res = { e: '🦑', m: 10 };
+            else if (roll > 70) res = { e: '🐡', m: 5 };
+            else if (roll > 40) res = { e: '🐠', m: 2 };
+            else if (roll > 15) res = { e: '🐟', m: 0.8 };
 
             balance += Math.floor(50 * res.m);
             fishWrap.innerText = res.e;
-            fishWrap.style.transform = "translate(-50%, -50%) scale(1)";
+            fishWrap.style.transform = "translate(-50%, -50%) scale(1.2)";
             
             setTimeout(() => {
                 fishWrap.style.transform = "translate(-50%, -50%) scale(0)";
                 btn.style.display = 'inline-block';
                 btn.innerText = "Закинути вудку";
                 btn.style.background = "linear-gradient(45deg, #ff4e50, #f9d423)";
-                gameState = 'idle';
-                updateUI();
+                gameState = 'idle'; updateUI();
             }, 3000);
         }
     }

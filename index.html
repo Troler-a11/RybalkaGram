@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -28,7 +28,6 @@
         
         .jackpot-banner { position: absolute; top: 100px; width: 100%; text-align: center; color: #fff; font-weight: bold; font-size: 24px; text-shadow: 0 0 10px gold; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        .combo-counter { position: absolute; right: 20px; top: 150px; color: #ff00ff; font-size: 40px; font-weight: 900; transform: rotate(15deg); display: none; }
         .paytable { margin: 20px auto; width: 90%; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; text-align: left; font-size: 14px; }
         .pay-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 
@@ -49,18 +48,17 @@
 
 <div id="loading">
     <div style="margin-bottom: 20px; font-size: 50px;">🎰</div>
-    ЗАВАНТАЖЕННЯ...
+    ЗАГРУЗКА...
     <div id="load-progress" style="width: 200px; height: 10px; background: #333; margin-top: 20px; border-radius: 5px; overflow: hidden;">
         <div id="load-bar" style="width: 0%; height: 100%; background: gold; transition: 0.3s;"></div>
     </div>
 </div>
 
 <div class="ui-layer">
-    <div class="jackpot-banner" id="jackpot-hud">JACKPOT: 50,000 🐟🪙</div>
-    <div class="combo-counter" id="combo-ui">x2 COMBO!</div>
+    <div class="jackpot-banner" id="jackpot-hud">ДЖЕКПОТ: 50,000 🐟🪙</div>
     <div class="stats">
-        <div class="badge">💰 <span id="bal-hud">1050</span> 🐟🪙</div>
-        <div class="badge" onclick="toggleProfile(true)" style="cursor:pointer">👤 ПРОФІЛЬ</div>
+        <div class="badge">💰 <span id="bal-hud">0</span> 🐟🪙</div>
+        <div class="badge" onclick="toggleProfile(true)" style="cursor:pointer">👤 ПРОФИЛЬ</div>
     </div>
     <div id="fish-wrap" class="fish-popup">🐟<br><span id="win-amount" class="profit-text"></span></div>
     
@@ -68,19 +66,19 @@
 
     <div class="controls">
         <div style="color: white; margin-bottom: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">СТАВКА: 50 🐟🪙</div>
-        <button id="action-btn" onclick="handleGame()">Закинути вудку</button>
+        <button id="action-btn" onclick="handleGame()">Закинуть удочку</button>
     </div>
 </div>
 
 <div id="basket-screen">
-    <h2 style="color: gold; text-align: center; margin-bottom: 5px;">🧺 ВАШ КОШИК</h2>
-    <p style="text-align: center; font-size: 12px; color: #888;">Останні 50 уловів</p>
+    <h2 style="color: gold; text-align: center; margin-bottom: 5px;">🧺 ВАШ САДОК</h2>
+    <p style="text-align: center; font-size: 12px; color: #888;">Последние 50 уловов</p>
     <div id="history-content" class="history-list"></div>
-    <button class="menu-btn btn-red" style="width: 100%;" onclick="closeBasket()">ЗАКРИТИ</button>
+    <button class="menu-btn btn-red" style="width: 100%;" onclick="closeBasket()">ЗАКРЫТЬ</button>
 </div>
 
 <div id="casino-overlay">
-    <h2 style="color: gold; font-size: 40px; margin-bottom: 20px; text-shadow: 0 0 10px red;">🎰 БОНУС КАЗІНО 🎰</h2>
+    <h2 style="color: gold; font-size: 40px; margin-bottom: 20px; text-shadow: 0 0 10px red;">🎰 БОНУС КАЗИНО 🎰</h2>
     <div class="slot-machine">
         <div id="slot1" class="slot">❓</div>
         <div id="slot2" class="slot">❓</div>
@@ -91,70 +89,86 @@
 
 <div id="profile-screen">
     <div id="user-photo" class="profile-avatar"></div>
-    <div id="user-nick" class="user-name">ГРАВЕЦЬ</div>
+    <div id="user-nick" class="user-name">ИГРОК</div>
     <div style="font-size: 48px; color: white; margin: 10px 0; font-weight: 900; text-shadow: 0 0 20px rgba(255,255,255,0.2);">
-        <span id="bal-prof">1050</span> <span style="font-size: 24px; color: gold;">🐟🪙</span>
+        <span id="bal-prof">0</span> <span style="font-size: 24px; color: gold;">🐟🪙</span>
     </div>
     
     <div class="paytable">
-        <h3 style="text-align: center; color: gold;">ШАНСИ ТА ВИПЛАТИ</h3>
-        <div class="pay-row"><span>🎰 КАЗІНО БОНУС (1%)</span> <span>???</span></div>
-        <div class="pay-row"><span>💎 ДІАМАНТ (0.2%)</span> <span>x500</span></div>
+        <h3 style="text-align: center; color: gold;">ШАНСЫ И ВЫПЛАТЫ</h3>
+        <div class="pay-row"><span>🎰 КАЗИНО БОНУС (1%)</span> <span>???</span></div>
+        <div class="pay-row"><span>💎 АЛМАЗ (0.05%)</span> <span>x500</span></div>
         <div class="pay-row"><span>🐋 КИТ (0.1%)</span> <span>x300</span></div>
         <div class="pay-row"><span>🦈 АКУЛА (0.3%)</span> <span>x100</span></div>
-        <div class="pay-row"><span>🐬 ДЕЛЬФІН (0.5%)</span> <span>x50</span></div>
+        <div class="pay-row"><span>🐬 ДЕЛЬФИН (0.5%)</span> <span>x50</span></div>
         <div class="pay-row"><span>🦞 ЛОБСТЕР (1.0%)</span> <span>x20</span></div>
         <div class="pay-row"><span>🦑 КАЛЬМАР (2.0%)</span> <span>x10</span></div>
         <div class="pay-row"><span>🦀 КРАБ / 🪼 МЕДУЗА (5.0%)</span> <span>x5</span></div>
-        <div class="pay-row"><span>🐠 ТРОПІЧНА РИБА (12.0%)</span> <span>x2</span></div>
-        <div class="pay-row"><span>🐟 ЗВИЧАЙНА РИБА (18.0%)</span> <span>x1</span></div>
-        <div class="pay-row"><span>🩲 ЧЕРЕВИК / СМІТТЯ (60.9%)</span> <span>x0</span></div>
+        <div class="pay-row"><span>🐠 ТРОП. РЫБА (12.0%)</span> <span>x2</span></div>
+        <div class="pay-row"><span>🐟 ОБЫЧНАЯ РЫБА (18.0%)</span> <span>x1</span></div>
+        <div class="pay-row"><span>🩲 ТРУСЫ (СОР) (60.05%)</span> <span>x0</span></div>
     </div>
 
-    <button class="menu-btn btn-gold" onclick="realStarsPayment()">ПОПОВНИТИ ЧЕРЕЗ ⭐ STARS</button>
-    <button class="menu-btn btn-dark" onclick="realGiftsWithdrawal()">ВИВЕСТИ (ВІД 5000 🐟🪙) 🎁</button>
+    <button class="menu-btn btn-gold" onclick="manualStarsDeposit()">ПОПОЛНИТЬ ЧЕРЕЗ ⭐ STARS</button>
+    <button class="menu-btn btn-dark" onclick="realGiftsWithdrawal()">ВЫВЕСТИ (ОТ 5000 🐟🪙) 🎁</button>
     <button class="menu-btn btn-red" onclick="toggleProfile(false)">НАЗАД</button>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    let balance = parseInt(localStorage.getItem('fish_balance')) || 1050; 
+    // БАГ ФИКС: Проверка на null, чтобы 0 сохранялся корректно
+    let savedBalance = localStorage.getItem('fish_balance');
+    let balance = (savedBalance === null) ? 50 : parseInt(savedBalance); 
+    
     let history = JSON.parse(localStorage.getItem('fish_history')) || [];
     let gameState = 'idle';
     let jackpot = 50055;
 
+    // --- ЗВУКОВАЯ СИСТЕМА ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBiteSound() {
+    
+    function playSound(freq, type, duration, vol) {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(40, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
 
+    function soundAmbiance() {
+        // Эмуляция шума моря (белый шум + фильтр)
+        setInterval(() => {
+            if(Math.random() > 0.7) playSound(100 + Math.random()*50, 'sine', 2, 0.02); // Волны
+            if(Math.random() > 0.98) playSound(800 + Math.random()*400, 'triangle', 0.5, 0.01); // Чайки
+        }, 1000);
+    }
+
+    function playBiteSound() { playSound(150, 'sawtooth', 0.3, 0.2); }
+    function playCastSound() { playSound(600, 'sine', 0.4, 0.1); }
+    function playWinSound(tier) {
+        if(tier === 'bad') playSound(100, 'square', 0.5, 0.2);
+        if(tier === 'mid') { playSound(440, 'sine', 0.2, 0.2); setTimeout(()=>playSound(660, 'sine', 0.2, 0.2), 100); }
+        if(tier === 'high') { 
+            [523, 659, 783, 1046].forEach((f, i) => setTimeout(()=>playSound(f, 'triangle', 0.4, 0.2), i*100));
+        }
+    }
+
+    // --- 3D МИР ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x00ccff); 
     scene.fog = new THREE.Fog(0x00ccff, 10, 150);
-
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
-    scene.add(hemiLight);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.4));
     const sun = new THREE.DirectionalLight(0xffffff, 1.2);
     sun.position.set(50, 100, 50);
-    sun.castShadow = true;
     scene.add(sun);
-    scene.add(new THREE.AmbientLight(0x404040, 0.5));
 
     const birds = [];
     function createBird() {
@@ -167,52 +181,15 @@
     }
     for(let i=0; i<12; i++) createBird();
 
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 128, 128), new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.85, shininess: 300 }));
-    water.rotation.x = -Math.PI / 2;
-    water.position.y = -2; 
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 64, 64), new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.8 }));
+    water.rotation.x = -Math.PI / 2; water.position.y = -2; 
     scene.add(water);
 
-    const bridgeGroup = new THREE.Group();
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0x4e342e });
-    for(let i = 0; i < 6; i++) {
-        const plank = new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 1.2), woodMat);
-        plank.position.z = -i * 1.3 + 10; 
-        bridgeGroup.add(plank);
-    }
-    bridgeGroup.position.y = -1.8;
-    scene.add(bridgeGroup);
-
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0x8d5524, roughness: 0.8 });
-    const armGeo = new THREE.CylinderGeometry(0.12, 0.18, 1.8);
-    const leftArmGroup = new THREE.Group();
-    const leftArm = new THREE.Mesh(armGeo, skinMat);
-    leftArm.position.y = 0.9;
-    leftArmGroup.add(leftArm);
-    leftArmGroup.position.set(-1.2, -1.0, 7.5); 
-    leftArmGroup.rotation.set(-1.1, 0.6, 0.4);
-    const rightArmGroup = new THREE.Group();
-    const rightArm = new THREE.Mesh(armGeo, skinMat);
-    rightArm.position.y = 0.9;
-    rightArmGroup.add(rightArm);
-    rightArmGroup.position.set(1.2, -1.0, 7.5);
-    rightArmGroup.rotation.set(-1.1, -0.6, -0.4);
-    const fishermanBody = new THREE.Group();
-    fishermanBody.add(leftArmGroup, rightArmGroup);
-    scene.add(fishermanBody);
-
     const rodGroup = new THREE.Group();
-    const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 7), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 }));
-    rodBody.position.y = 3.2; 
-    rodGroup.add(rodBody);
-    const reel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.4), new THREE.MeshStandardMaterial({color: 0x333333}));
-    reel.rotation.z = Math.PI/2; reel.position.y = 1.3;
-    rodGroup.add(reel);
-    rodGroup.rotation.x = -Math.PI / 3.5; 
-    rodGroup.position.set(0, -0.6, 5.2);
+    const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 7), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+    rodBody.position.y = 3.2; rodGroup.add(rodBody);
+    rodGroup.rotation.x = -Math.PI / 3.5; rodGroup.position.set(0, -0.6, 5.2);
     scene.add(rodGroup);
-
-    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 6.5, 0), new THREE.Vector3(0, -2, -10)]), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }));
-    rodGroup.add(line); 
 
     const float = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
     float.position.set(0, -1.9, -6);
@@ -224,84 +201,60 @@
     function animate() {
         requestAnimationFrame(animate);
         const time = Date.now() * 0.001;
-        const verts = water.geometry.attributes.position.array;
-        for (let i = 2; i < verts.length; i += 3) verts[i] = Math.sin(time * 1.5 + i) * 0.1;
-        water.geometry.attributes.position.needsUpdate = true;
         float.position.y = -1.9 + Math.sin(time * 2.5) * 0.06;
         birds.forEach(b => { b.mesh.position.x += b.speed; if(b.mesh.position.x > 70) b.mesh.position.x = -70; });
-        const idleSway = Math.sin(time) * 0.02;
-        rodGroup.position.y = -0.6 + idleSway;
-        fishermanBody.position.y = idleSway;
         if (gameState === 'biting') {
             float.position.y -= 0.5;
             rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 35) * 0.08;
-            if (Math.random() > 0.92) playBiteSound();
+            if (Math.random() > 0.95) playBiteSound();
         }
         renderer.render(scene, camera);
     }
     
-    function initTelegramUser() {
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('user-nick').innerText = user.first_name + (user.last_name ? " " + user.last_name : "");
-            if (user.photo_url) document.getElementById('user-photo').style.backgroundImage = `url('${user.photo_url}')`;
-        }
-    }
-
     function updateUI() {
         document.getElementById('bal-hud').innerText = balance.toLocaleString();
         document.getElementById('bal-prof').innerText = balance.toLocaleString();
-        localStorage.setItem('fish_balance', balance);
+        localStorage.setItem('fish_balance', balance.toString());
         jackpot += Math.floor(Math.random()*3);
-        document.getElementById('jackpot-hud').innerText = `JACKPOT: ${jackpot.toLocaleString()} 🐟🪙`;
+        document.getElementById('jackpot-hud').innerText = `ДЖЕКПОТ: ${jackpot.toLocaleString()} 🐟🪙`;
     }
 
-    // РЕАЛЬНІ ПЛАТЕЖІ TELEGRAM STARS
-    function realStarsPayment() {
+    // --- НОВОЕ: РУЧНОЙ ВВОД СУММЫ ---
+    function manualStarsDeposit() {
         tg.showPopup({
-            title: 'Купити монети',
-            message: 'Оберіть пакет поповнення через Telegram Stars:',
-            buttons: [
-                {id: 'p1', type: 'default', text: '100 🐟 (100 ⭐)'},
-                {id: 'p2', type: 'default', text: '500 🐟 (500 ⭐)'},
-                {type: 'cancel'}
-            ]
+            title: 'Пополнение Stars',
+            message: 'Введите количество ⭐ в чат боту после нажатия ОК (имитация ввода)',
+            buttons: [{id: 'input', type: 'default', text: 'Ввести сумму'}]
         }, (id) => {
-            if (id) {
-                // В реальному боті тут відкривається рахунок: tg.openInvoice(url, callback)
-                tg.showAlert("Рахунок сформовано! (У реальному середовищі відкриється вікно оплати ⭐)");
-                // Емуляція успіху для тесту
-                setTimeout(() => { balance += (id === 'p1' ? 100 : 500); updateUI(); }, 1000);
+            if(id === 'input') {
+                const amount = prompt("Сколько ⭐ хотите внести?", "100");
+                const val = parseInt(amount);
+                if(val > 0) {
+                    balance += val;
+                    updateUI();
+                    tg.showAlert(`Вы успешно внесли ${val} ⭐!`);
+                }
             }
         });
     }
 
-    // РЕАЛЬНЕ ВИВЕДЕННЯ (ОБНУЛЕННЯ)
     function realGiftsWithdrawal() {
-        if (balance < 5000) return tg.showAlert("Мінімальна сума для виведення - 5000 🐟🪙");
-        
-        tg.showConfirm(`Увага! При виведенні весь ваш баланс (${balance.toLocaleString()} 🐟) буде списано. Натомість бот надішле вам максимально можливу кількість подарунків. Продовжити?`, (ok) => {
+        if (balance < 5000) return tg.showAlert("Минимум для вывода - 5000 🐟🪙");
+        tg.showConfirm(`Вывод обнулит ваш баланс (${balance}). Бот отправит подарки. Продолжить?`, (ok) => {
             if (ok) {
-                const finalBalance = balance;
-                balance = 0; // Обнулення балансу за вимогою
+                balance = 0;
                 updateUI();
-                addToHistory('🎁', 'ВИВЕДЕННЯ КОШТІВ', -finalBalance);
-                tg.showAlert("Запит прийнято! Бот надішле подарунки на ваш акаунт протягом 24 годин.");
+                addToHistory('🎁', 'ВЫВОД СРЕДСТВ', 0);
+                tg.showAlert("Заявка принята! Ожидайте подарки.");
             }
         });
     }
 
-    // ПРАЦЮЮЧИЙ КОШИК
     function openBasket() {
         const content = document.getElementById('history-content');
-        content.innerHTML = history.length ? '' : '<p style="text-align:center; padding:20px; color:#555;">Тут буде ваша історія...</p>';
+        content.innerHTML = history.length ? '' : '<p style="text-align:center; padding:20px;">Пусто...</p>';
         history.forEach(item => {
-            const color = item.win >= 0 ? 'lime' : '#ff4d4d';
-            content.innerHTML += `
-                <div class="history-item">
-                    <span>${item.icon} ${item.name}</span>
-                    <span style="color: ${color}">${item.win > 0 ? '+' : ''}${item.win.toLocaleString()}</span>
-                </div>`;
+            content.innerHTML += `<div class="history-item"><span>${item.icon} ${item.name}</span><span style="color:${item.win>=50?'lime':'red'}">${item.win}</span></div>`;
         });
         document.getElementById('basket-screen').style.display = 'flex';
     }
@@ -309,7 +262,7 @@
     function closeBasket() { document.getElementById('basket-screen').style.display = 'none'; }
 
     function addToHistory(icon, name, win) {
-        history.unshift({icon, name, win, time: new Date().toLocaleTimeString()});
+        history.unshift({icon, name, win});
         if(history.length > 50) history.pop();
         localStorage.setItem('fish_history', JSON.stringify(history));
     }
@@ -318,45 +271,48 @@
         const btn = document.getElementById('action-btn');
         const fishWrap = document.getElementById('fish-wrap');
         if (gameState === 'idle') {
-            if (balance < 50) return tg.showAlert("Мало монет!");
+            if (balance < 50) return tg.showAlert("Недостаточно монет!");
             balance -= 50; updateUI();
             gameState = 'fishing';
-            btn.innerText = "ОЧІКУВАННЯ..."; btn.disabled = true;
+            playCastSound();
+            btn.innerText = "ОЖИДАНИЕ..."; btn.disabled = true;
             setTimeout(() => {
                 if(gameState !== 'fishing') return;
-                gameState = 'biting'; btn.disabled = false; btn.innerText = "ПІДСІКАЙ!";
+                gameState = 'biting'; btn.disabled = false; btn.innerText = "ПОДСЕКАЙ!";
                 tg.HapticFeedback.notificationOccurred('warning');
             }, Math.random() * 4000 + 1500);
         } else if (gameState === 'biting') {
             gameState = 'result'; btn.style.display = 'none';
             const roll = Math.random() * 100;
-            let res = { e: '🩲', n: 'Черевик', m: 0 }; 
+            let res = { e: '🩲', n: 'Трусы', m: 0, t: 'bad' }; 
 
-            if (roll > 99.8) res = { e: '💎', n: 'Діамант', m: 500 };
-            else if (roll > 99.0) { runCasino(); res = { e: '🎰', n: 'Казино', m: 0 }; }
-            else if (roll > 98.9) res = { e: '🐋', n: 'Кит', m: 300 };
-            else if (roll > 98.6) res = { e: '🦈', n: 'Акула', m: 100 };
-            else if (roll > 98.1) res = { e: '🐬', n: 'Дельфін', m: 50 };
-            else if (roll > 97.1) res = { e: '🦞', n: 'Лобстер', m: 20 };
-            else if (roll > 95.1) res = { e: '🦑', n: 'Кальмар', m: 10 };
-            else if (roll > 90.1) res = { e: '🦀', n: 'Краб', m: 5 };
-            else if (roll > 78.1) res = { e: '🐠', n: 'Тропічна риба', m: 2 };
-            else if (roll > 60.1) res = { e: '🐟', n: 'Рибка', m: 1 };
+            // ШАНСЫ (Исправлено: Алмаз 0.05%, Кит 0.1%)
+            if (roll > 99.95) res = { e: '💎', n: 'Алмаз', m: 500, t: 'high' };
+            else if (roll > 99.0) { runCasino(); res = { e: '🎰', n: 'Казино', m: 0, t: 'high' }; }
+            else if (roll > 98.9) res = { e: '🐋', n: 'Кит', m: 300, t: 'high' };
+            else if (roll > 98.6) res = { e: '🦈', n: 'Акула', m: 100, t: 'high' };
+            else if (roll > 98.1) res = { e: '🐬', n: 'Дельфин', m: 50, t: 'mid' };
+            else if (roll > 97.1) res = { e: '🦞', n: 'Лобстер', m: 20, t: 'mid' };
+            else if (roll > 95.1) res = { e: '🦑', n: 'Кальмар', m: 10, t: 'mid' };
+            else if (roll > 90.1) res = { e: '🦀', n: 'Краб', m: 5, t: 'mid' };
+            else if (roll > 78.1) res = { e: '🐠', n: 'Троп. рыба', m: 2, t: 'mid' };
+            else if (roll > 60.1) res = { e: '🐟', n: 'Рыбка', m: 1, t: 'mid' };
 
             if(res.n !== 'Казино') {
                 let win = Math.floor(50 * res.m);
                 balance += win;
-                addToHistory(res.e, res.n, win - 50);
+                playWinSound(res.t);
+                addToHistory(res.e, res.n, win);
                 fishWrap.innerHTML = `${res.e}<br><span class="profit-text">+${win}</span>`;
                 fishWrap.style.transform = "translate(-50%, -50%) scale(1)";
                 tg.HapticFeedback.impactOccurred('heavy');
                 setTimeout(() => {
                     fishWrap.style.transform = "translate(-50%, -50%) scale(0)";
-                    btn.style.display = 'inline-block'; btn.innerText = "Закинути вудку";
+                    btn.style.display = 'inline-block'; btn.innerText = "Закинуть удочку";
                     gameState = 'idle'; updateUI();
                 }, 2500);
             } else {
-                btn.style.display = 'inline-block'; btn.innerText = "Закинути вудку";
+                btn.style.display = 'inline-block'; btn.innerText = "Закинуть удочку";
                 gameState = 'idle';
             }
         }
@@ -365,32 +321,37 @@
     function runCasino() {
         const overlay = document.getElementById('casino-overlay');
         const s1 = document.getElementById('slot1'), s2 = document.getElementById('slot2'), s3 = document.getElementById('slot3');
-        const resDiv = document.getElementById('casino-result');
-        const symbols = ['🪙', '💵', '💰', '👑', '💎', '💯'];
-        overlay.style.display = 'flex'; resDiv.innerText = "Крутимо...";
+        overlay.style.display = 'flex';
         let iters = 0;
         const interval = setInterval(() => {
-            s1.innerText = symbols[Math.floor(Math.random()*symbols.length)];
-            s2.innerText = symbols[Math.floor(Math.random()*symbols.length)];
-            s3.innerText = symbols[Math.floor(Math.random()*symbols.length)];
+            const sym = ['🪙', '💵', '💰', '👑', '💎'];
+            s1.innerText = sym[Math.floor(Math.random()*5)];
+            s2.innerText = sym[Math.floor(Math.random()*5)];
+            s3.innerText = sym[Math.floor(Math.random()*5)];
+            playSound(200 + iters*20, 'sine', 0.05, 0.1);
             if(++iters > 25) {
                 clearInterval(interval);
-                if(Math.random() > 0.96) {
-                    s1.innerText = '💎'; s2.innerText = '💎'; s3.innerText = '💎';
-                    balance += 5000; resDiv.innerHTML = `<span style="color:lime">JACKPOT! +5000</span>`;
-                    addToHistory('🎰', 'JACKPOT CASINO', 4950);
-                } else {
-                    resDiv.innerText = "МАЙЖЕ!";
-                    addToHistory('🎰', 'LOSE CASINO', -50);
+                if(Math.random() > 0.95) {
+                    s1.innerText='💎'; s2.innerText='💎'; s3.innerText='💎';
+                    balance += 5000; playWinSound('high');
                 }
-                setTimeout(() => { overlay.style.display = 'none'; updateUI(); }, 2500);
+                setTimeout(() => { overlay.style.display='none'; updateUI(); }, 2000);
             }
         }, 100);
     }
 
     function toggleProfile(show) { document.getElementById('profile-screen').style.display = show ? 'block' : 'none'; }
 
-    setTimeout(() => { document.getElementById('loading').style.display = 'none'; initTelegramUser(); }, 1200);
+    // Инициализация
+    setTimeout(() => { 
+        document.getElementById('loading').style.display = 'none'; 
+        if (tg.initDataUnsafe?.user) {
+            document.getElementById('user-nick').innerText = tg.initDataUnsafe.user.first_name;
+            if (tg.initDataUnsafe.user.photo_url) document.getElementById('user-photo').style.backgroundImage = `url('${tg.initDataUnsafe.user.photo_url}')`;
+        }
+        soundAmbiance();
+    }, 1200);
+
     animate();
     updateUI();
     tg.expand();

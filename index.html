@@ -191,24 +191,22 @@
     }
     for(let i=0; i<12; i++) createBird();
 
-    // МОДЕРНІЗАЦІЯ ВОДИ: Хвилі
-    const waterGeo = new THREE.PlaneGeometry(1000, 1000, 128, 128);
+    // МОДЕРНІЗАЦІЯ ВОДИ
+    const waterGeo = new THREE.PlaneGeometry(1000, 1000, 64, 64);
     const waterMat = new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.8, shininess: 100 });
     const water = new THREE.Mesh(waterGeo, waterMat);
     water.rotation.x = -Math.PI / 2; water.position.y = -2; 
     scene.add(water);
 
-    // МОДЕРНІЗАЦІЯ ВУДКИ: Деталі
+    // МОДЕРНІЗАЦІЯ ВУДКИ
     const rodGroup = new THREE.Group();
-    // Основне тіло вудки (карбон)
     const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.05, 7, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
     rodBody.position.y = 3.5; rodGroup.add(rodBody);
     
-    // Руків'я (корок)
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 1.5, 12), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
     handle.position.y = 0.5; rodGroup.add(handle);
 
-    // КОТУШКА (Reel)
+    // КОТУШКА
     const reelGroup = new THREE.Group();
     const reelBody = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.25, 16), new THREE.MeshStandardMaterial({ color: 0x444444 }));
     reelBody.rotation.z = Math.PI/2;
@@ -217,57 +215,56 @@
     const reelHandle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.05), new THREE.MeshStandardMaterial({ color: 0x111111 }));
     reelHandle.position.set(0.15, 0.1, 0);
     reelGroup.add(reelBody, reelSpool, reelHandle);
-    reelGroup.position.set(0.15, 1.4, 0); // Трохи зміщена вбік
+    reelGroup.position.set(0.15, 1.4, 0);
     rodGroup.add(reelGroup);
 
-    // Кільце на кінчику
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.01, 8, 16), new THREE.MeshStandardMaterial({ color: 0xaaaaaa }));
     ring.position.y = 7; ring.rotation.x = Math.PI/2; rodGroup.add(ring);
 
     rodGroup.rotation.x = -Math.PI / 3.5; rodGroup.position.set(0, -0.6, 5.2);
     scene.add(rodGroup);
 
-    // ПОПЛАВОК
+    // ПОПЛАВОК (Позиція виправлена для видимості)
     const float = new THREE.Group();
-    const floatBody = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
-    const floatAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.4), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    floatAntenna.position.y = 0.2; float.add(floatBody); float.add(floatAntenna);
-    float.position.set(0, -1.9, -6);
+    const floatBody = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x330000 }));
+    const floatAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    floatAntenna.position.y = 0.3; float.add(floatBody); float.add(floatAntenna);
+    float.position.set(0, -1.8, -4); // Наблизив до камери
     scene.add(float);
 
-    // ЛІСКА (Зміщена вбік)
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+    // ЛІСКА
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
     const lineGeometry = new THREE.BufferGeometry();
     const line = new THREE.Line(lineGeometry, lineMaterial);
     scene.add(line);
 
-    camera.position.set(0, 1.5, 9);
-    camera.lookAt(0, 0, -5);
+    // КАМЕРА (Налаштована на поплавок)
+    camera.position.set(0, 2, 10);
+    camera.lookAt(0, -1, -5);
 
     function animate() {
         requestAnimationFrame(animate);
         const time = Date.now() * 0.001;
 
-        // Хвилі
         const vertices = waterGeo.attributes.position.array;
         for (let i = 0; i < vertices.length; i += 3) {
             const x = vertices[i];
             const y = vertices[i + 1];
-            vertices[i + 2] = Math.sin(x * 0.1 + time) * 0.2 + Math.cos(y * 0.1 + time) * 0.2;
+            vertices[i + 2] = Math.sin(x * 0.1 + time) * 0.15 + Math.cos(y * 0.1 + time) * 0.15;
         }
         waterGeo.attributes.position.needsUpdate = true;
 
-        float.position.y = -1.9 + Math.sin(time * 2.5) * 0.06;
+        float.position.y = -1.8 + Math.sin(time * 2) * 0.08;
         birds.forEach(b => { b.mesh.position.x += b.speed; if(b.mesh.position.x > 70) b.mesh.position.x = -70; });
         
         if (gameState === 'biting') {
-            float.position.y -= 0.4;
-            rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 35) * 0.05;
-            reelHandle.rotation.x += 0.5; // Обертання ручки при кльові
+            float.position.y -= 0.5;
+            rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 30) * 0.04;
+            reelHandle.rotation.x += 0.4;
         }
 
-        // Оновлення ліски (з невеликим зміщенням X, щоб було видно)
-        const tipPos = new THREE.Vector3(0.05, 7, 0); // Кінчик трохи правіше осі вудки
+        // Ліска йде трохи боком
+        const tipPos = new THREE.Vector3(0.08, 7, 0); 
         rodGroup.localToWorld(tipPos);
         const linePoints = [tipPos, float.position.clone()];
         lineGeometry.setFromPoints(linePoints);

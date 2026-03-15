@@ -116,10 +116,8 @@
 
 <script>
     const tg = window.Telegram.WebApp;
-    // БАГ ФИКС: Проверка на null, чтобы 0 сохранялся корректно
     let savedBalance = localStorage.getItem('fish_balance');
     let balance = (savedBalance === null) ? 50 : parseInt(savedBalance); 
-    
     let history = JSON.parse(localStorage.getItem('fish_history')) || [];
     let gameState = 'idle';
     let jackpot = 50055;
@@ -139,20 +137,41 @@
     }
 
     function soundAmbiance() {
-        // Эмуляция шума моря (белый шум + фильтр)
+        // Мягкий шум моря и периодические чайки
         setInterval(() => {
-            if(Math.random() > 0.7) playSound(100 + Math.random()*50, 'sine', 2, 0.02); // Волны
-            if(Math.random() > 0.98) playSound(800 + Math.random()*400, 'triangle', 0.5, 0.01); // Чайки
-        }, 1000);
+            // Фон только если в покое
+            if (Math.random() > 0.6) {
+                // Имитация шума набегающей воды
+                playSound(80 + Math.random()*40, 'sine', 3, 0.015);
+            }
+            if (Math.random() > 0.97) {
+                // Редкая чайка
+                const f = 700 + Math.random()*300;
+                playSound(f, 'triangle', 0.4, 0.008);
+                setTimeout(() => playSound(f + 50, 'triangle', 0.2, 0.005), 150);
+            }
+        }, 1500);
     }
 
-    function playBiteSound() { playSound(150, 'sawtooth', 0.3, 0.2); }
-    function playCastSound() { playSound(600, 'sine', 0.4, 0.1); }
+    // Звук заброса
+    function playCastSound() { playSound(500, 'sine', 0.5, 0.08); }
+    
+    // Звуки вылова (разные уровни)
     function playWinSound(tier) {
-        if(tier === 'bad') playSound(100, 'square', 0.5, 0.2);
-        if(tier === 'mid') { playSound(440, 'sine', 0.2, 0.2); setTimeout(()=>playSound(660, 'sine', 0.2, 0.2), 100); }
-        if(tier === 'high') { 
-            [523, 659, 783, 1046].forEach((f, i) => setTimeout(()=>playSound(f, 'triangle', 0.4, 0.2), i*100));
+        if(tier === 'bad') {
+            // Грустный короткий звук для трусов
+            playSound(120, 'square', 0.4, 0.15);
+        } else if(tier === 'mid') {
+            // Обычная рыбка
+            playSound(440, 'sine', 0.1, 0.15);
+            setTimeout(() => playSound(554, 'sine', 0.1, 0.12), 80);
+            setTimeout(() => playSound(659, 'sine', 0.2, 0.1), 160);
+        } else if(tier === 'high') {
+            // Дорогой улов - арпеджио
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((f, i) => {
+                setTimeout(() => playSound(f, 'triangle', 0.5, 0.15), i * 120);
+            });
         }
     }
 
@@ -206,7 +225,6 @@
         if (gameState === 'biting') {
             float.position.y -= 0.5;
             rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 35) * 0.08;
-            if (Math.random() > 0.95) playBiteSound();
         }
         renderer.render(scene, camera);
     }
@@ -219,15 +237,14 @@
         document.getElementById('jackpot-hud').innerText = `ДЖЕКПОТ: ${jackpot.toLocaleString()} 🐟🪙`;
     }
 
-    // --- НОВОЕ: РУЧНОЙ ВВОД СУММЫ ---
     function manualStarsDeposit() {
         tg.showPopup({
             title: 'Пополнение Stars',
-            message: 'Введите количество ⭐ в чат боту после нажатия ОК (имитация ввода)',
+            message: 'Введите количество ⭐',
             buttons: [{id: 'input', type: 'default', text: 'Ввести сумму'}]
         }, (id) => {
             if(id === 'input') {
-                const amount = prompt("Сколько ⭐ хотите внести?", "100");
+                const amount = prompt("Сколько ⭐ внести?", "100");
                 const val = parseInt(amount);
                 if(val > 0) {
                     balance += val;
@@ -240,12 +257,12 @@
 
     function realGiftsWithdrawal() {
         if (balance < 5000) return tg.showAlert("Минимум для вывода - 5000 🐟🪙");
-        tg.showConfirm(`Вывод обнулит ваш баланс (${balance}). Бот отправит подарки. Продолжить?`, (ok) => {
+        tg.showConfirm(`Вывод обнулит ваш баланс. Продолжить?`, (ok) => {
             if (ok) {
                 balance = 0;
                 updateUI();
                 addToHistory('🎁', 'ВЫВОД СРЕДСТВ', 0);
-                tg.showAlert("Заявка принята! Ожидайте подарки.");
+                tg.showAlert("Заявка принята!");
             }
         });
     }
@@ -286,7 +303,6 @@
             const roll = Math.random() * 100;
             let res = { e: '🩲', n: 'Трусы', m: 0, t: 'bad' }; 
 
-            // ШАНСЫ (Исправлено: Алмаз 0.05%, Кит 0.1%)
             if (roll > 99.95) res = { e: '💎', n: 'Алмаз', m: 500, t: 'high' };
             else if (roll > 99.0) { runCasino(); res = { e: '🎰', n: 'Казино', m: 0, t: 'high' }; }
             else if (roll > 98.9) res = { e: '🐋', n: 'Кит', m: 300, t: 'high' };
@@ -328,7 +344,6 @@
             s1.innerText = sym[Math.floor(Math.random()*5)];
             s2.innerText = sym[Math.floor(Math.random()*5)];
             s3.innerText = sym[Math.floor(Math.random()*5)];
-            playSound(200 + iters*20, 'sine', 0.05, 0.1);
             if(++iters > 25) {
                 clearInterval(interval);
                 if(Math.random() > 0.95) {
@@ -342,7 +357,6 @@
 
     function toggleProfile(show) { document.getElementById('profile-screen').style.display = show ? 'block' : 'none'; }
 
-    // Инициализация
     setTimeout(() => { 
         document.getElementById('loading').style.display = 'none'; 
         if (tg.initDataUnsafe?.user) {

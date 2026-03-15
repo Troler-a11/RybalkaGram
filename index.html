@@ -137,15 +137,11 @@
     }
 
     function soundAmbiance() {
-        // Мягкий шум моря и периодические чайки
         setInterval(() => {
-            // Фон только если в покое
             if (Math.random() > 0.6) {
-                // Имитация шума набегающей воды
                 playSound(80 + Math.random()*40, 'sine', 3, 0.015);
             }
             if (Math.random() > 0.97) {
-                // Редкая чайка
                 const f = 700 + Math.random()*300;
                 playSound(f, 'triangle', 0.4, 0.008);
                 setTimeout(() => playSound(f + 50, 'triangle', 0.2, 0.005), 150);
@@ -153,21 +149,16 @@
         }, 1500);
     }
 
-    // Звук заброса
     function playCastSound() { playSound(500, 'sine', 0.5, 0.08); }
     
-    // Звуки вылова (разные уровни)
     function playWinSound(tier) {
         if(tier === 'bad') {
-            // Грустный короткий звук для трусов
             playSound(120, 'square', 0.4, 0.15);
         } else if(tier === 'mid') {
-            // Обычная рыбка
             playSound(440, 'sine', 0.1, 0.15);
             setTimeout(() => playSound(554, 'sine', 0.1, 0.12), 80);
             setTimeout(() => playSound(659, 'sine', 0.2, 0.1), 160);
         } else if(tier === 'high') {
-            // Дорогой улов - арпеджио
             const notes = [523.25, 659.25, 783.99, 1046.50];
             notes.forEach((f, i) => {
                 setTimeout(() => playSound(f, 'triangle', 0.5, 0.15), i * 120);
@@ -200,19 +191,43 @@
     }
     for(let i=0; i<12; i++) createBird();
 
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 64, 64), new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.8 }));
+    // МОДЕРНІЗАЦІЯ ВОДИ: Хвилі
+    const waterGeo = new THREE.PlaneGeometry(1000, 1000, 128, 128);
+    const waterMat = new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.8, shininess: 100 });
+    const water = new THREE.Mesh(waterGeo, waterMat);
     water.rotation.x = -Math.PI / 2; water.position.y = -2; 
     scene.add(water);
 
+    // МОДЕРНІЗАЦІЯ ВУДКИ: Деталі
     const rodGroup = new THREE.Group();
-    const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 7), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-    rodBody.position.y = 3.2; rodGroup.add(rodBody);
+    // Основне тіло вудки (карбон)
+    const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.05, 7, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+    rodBody.position.y = 3.5; rodGroup.add(rodBody);
+    
+    // Руків'я (корок/неопрен)
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 1.5, 12), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+    handle.position.y = 0.5; rodGroup.add(handle);
+
+    // Кільце на кінчику
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.01, 8, 16), new THREE.MeshStandardMaterial({ color: 0xaaaaaa }));
+    ring.position.y = 7; ring.rotation.x = Math.PI/2; rodGroup.add(ring);
+
     rodGroup.rotation.x = -Math.PI / 3.5; rodGroup.position.set(0, -0.6, 5.2);
     scene.add(rodGroup);
 
-    const float = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+    // ПОПЛАВОК (Оновлений)
+    const float = new THREE.Group();
+    const floatBody = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+    const floatAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.4), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    floatAntenna.position.y = 0.2; float.add(floatBody); float.add(floatAntenna);
     float.position.set(0, -1.9, -6);
     scene.add(float);
+
+    // ЛІСКА (Fishing Line)
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+    const lineGeometry = new THREE.BufferGeometry();
+    const line = new THREE.Line(lineGeometry, lineMaterial);
+    scene.add(line);
 
     camera.position.set(0, 1.5, 9);
     camera.lookAt(0, 0, -5);
@@ -220,12 +235,31 @@
     function animate() {
         requestAnimationFrame(animate);
         const time = Date.now() * 0.001;
+
+        // Анімація хвиль
+        const vertices = waterGeo.attributes.position.array;
+        for (let i = 0; i < vertices.length; i += 3) {
+            const x = vertices[i];
+            const y = vertices[i + 1];
+            vertices[i + 2] = Math.sin(x * 0.1 + time) * 0.2 + Math.cos(y * 0.1 + time) * 0.2;
+        }
+        waterGeo.attributes.position.needsUpdate = true;
+
+        // Поплавок на хвилях
         float.position.y = -1.9 + Math.sin(time * 2.5) * 0.06;
         birds.forEach(b => { b.mesh.position.x += b.speed; if(b.mesh.position.x > 70) b.mesh.position.x = -70; });
+        
         if (gameState === 'biting') {
-            float.position.y -= 0.5;
-            rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 35) * 0.08;
+            float.position.y -= 0.4;
+            rodGroup.rotation.x = -Math.PI / 3.5 + Math.sin(time * 35) * 0.05;
         }
+
+        // Оновлення ліски (від кінчика вудки до поплавка)
+        const tipPos = new THREE.Vector3(0, 7, 0);
+        rodGroup.localToWorld(tipPos);
+        const linePoints = [tipPos, float.position.clone()];
+        lineGeometry.setFromPoints(linePoints);
+
         renderer.render(scene, camera);
     }
     

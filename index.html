@@ -191,14 +191,12 @@
     }
     for(let i=0; i<12; i++) createBird();
 
-    // МОДЕРНІЗАЦІЯ ВОДИ
     const waterGeo = new THREE.PlaneGeometry(1000, 1000, 64, 64);
     const waterMat = new THREE.MeshPhongMaterial({ color: 0x0066ff, transparent: true, opacity: 0.8, shininess: 100 });
     const water = new THREE.Mesh(waterGeo, waterMat);
     water.rotation.x = -Math.PI / 2; water.position.y = -2; 
     scene.add(water);
 
-    // МОДЕРНІЗАЦІЯ ВУДКИ
     const rodGroup = new THREE.Group();
     const rodBody = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.05, 7, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
     rodBody.position.y = 3.5; rodGroup.add(rodBody);
@@ -206,7 +204,6 @@
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 1.5, 12), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
     handle.position.y = 0.5; rodGroup.add(handle);
 
-    // КОТУШКА
     const reelGroup = new THREE.Group();
     const reelBody = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.25, 16), new THREE.MeshStandardMaterial({ color: 0x444444 }));
     reelBody.rotation.z = Math.PI/2;
@@ -224,21 +221,18 @@
     rodGroup.rotation.x = -Math.PI / 3.5; rodGroup.position.set(0, -0.6, 5.2);
     scene.add(rodGroup);
 
-    // ПОПЛАВОК (Позиція виправлена для видимості)
     const float = new THREE.Group();
     const floatBody = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x330000 }));
     const floatAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), new THREE.MeshStandardMaterial({ color: 0xffffff }));
     floatAntenna.position.y = 0.3; float.add(floatBody); float.add(floatAntenna);
-    float.position.set(0, -1.8, -4); // Наблизив до камери
+    float.position.set(0, -1.8, -4); 
     scene.add(float);
 
-    // ЛІСКА
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
     const lineGeometry = new THREE.BufferGeometry();
     const line = new THREE.Line(lineGeometry, lineMaterial);
     scene.add(line);
 
-    // КАМЕРА (Налаштована на поплавок)
     camera.position.set(0, 2, 10);
     camera.lookAt(0, -1, -5);
 
@@ -263,7 +257,6 @@
             reelHandle.rotation.x += 0.4;
         }
 
-        // Ліска йде трохи боком
         const tipPos = new THREE.Vector3(0.08, 7, 0); 
         rodGroup.localToWorld(tipPos);
         const linePoints = [tipPos, float.position.clone()];
@@ -280,32 +273,36 @@
         document.getElementById('jackpot-hud').innerText = `ДЖЕКПОТ: ${jackpot.toLocaleString()} 🐟🪙`;
     }
 
+    // --- ОНОВЛЕНІ ФУНКЦІЇ ДЛЯ ЗВ'ЯЗКУ З БОТОМ ---
+
     function manualStarsDeposit() {
-        tg.showPopup({
-            title: 'Пополнение Stars',
-            message: 'Введите количество ⭐',
-            buttons: [{id: 'input', type: 'default', text: 'Ввести сумму'}]
-        }, (id) => {
-            if(id === 'input') {
-                const amount = prompt("Сколько ⭐ внести?", "100");
-                const val = parseInt(amount);
-                if(val > 0) {
-                    balance += val;
-                    updateUI();
-                    tg.showAlert(`Вы успешно внесли ${val} ⭐!`);
-                }
-            }
-        });
+        // Відкриваємо інвойс або надсилаємо запит боту на поповнення
+        tg.showAlert("Для пополнения баланса напишите боту команду /pay или используйте меню.");
     }
 
     function realGiftsWithdrawal() {
-        if (balance < 5000) return tg.showAlert("Минимум для вывода - 5000 🐟🪙");
-        tg.showConfirm(`Вывод обнулит ваш баланс. Продолжить?`, (ok) => {
+        if (balance < 5000) {
+            return tg.showAlert("Минимальная сумма для вывода — 5000 🐟🪙");
+        }
+
+        tg.showConfirm(`Вы точно хотите вывести ${balance} 🐟🪙 подарками?`, (ok) => {
             if (ok) {
+                // ВАЖЛИВО: Відправляємо дані боту
+                const data = {
+                    action: "withdraw",
+                    amount: balance
+                };
+                
+                tg.sendData(JSON.stringify(data)); 
+                
+                // Очищаємо баланс локально, бо він переходить в обробку ботом
                 balance = 0;
                 updateUI();
-                addToHistory('🎁', 'ВЫВОД СРЕДСТВ', 0);
-                tg.showAlert("Заявка принята!");
+                
+                // Закриваємо гру, щоб побачити розрахунок подарунків у боті
+                setTimeout(() => {
+                    tg.close();
+                }, 500);
             }
         });
     }

@@ -17,7 +17,7 @@
         #action-btn { padding: 22px 65px; font-size: 26px; font-weight: 900; color: white; background: linear-gradient(45deg, #ff4e50, #f9d423); border: 4px solid #fff; border-radius: 60px; cursor: pointer; box-shadow: 0 12px 30px rgba(0,0,0,0.6); text-transform: uppercase; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #action-btn:active { transform: scale(0.92); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
         #action-btn:disabled { filter: grayscale(1); opacity: 0.6; cursor: not-allowed; }
-        #profile-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); display: none; z-index: 200; color: white; text-align: center; padding-top: 80px; box-sizing: border-box; overflow-y: auto; }
+        #profile-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); display: none; z-index: 200; color: white; text-align: center; padding-top: 50px; box-sizing: border-box; overflow-y: auto; }
         .fish-popup { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 120px; transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 150; text-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
         .profit-text { font-size: 42px; color: #00ff00; margin-top: 25px; font-weight: 900; text-shadow: 0 0 20px #000; display: block; }
         .menu-btn { width: 85%; padding: 22px; margin: 12px 0; border-radius: 20px; border: none; font-size: 20px; font-weight: 800; cursor: pointer; transition: 0.3s; }
@@ -32,10 +32,12 @@
         .paytable { margin: 20px auto; width: 90%; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; text-align: left; font-size: 14px; }
         .pay-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 
-        /* CASINO STYLES */
         #casino-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 500; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .slot-machine { display: flex; gap: 15px; background: #444; padding: 20px; border: 8px solid gold; border-radius: 20px; margin-bottom: 30px; }
         .slot { width: 80px; height: 100px; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; border: 4px solid #222; }
+        
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; border: 4px solid gold; margin: 0 auto 15px; background-size: cover; background-position: center; display: block; }
+        .user-name { font-size: 22px; font-weight: bold; color: #fff; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -73,28 +75,29 @@
 </div>
 
 <div id="profile-screen">
-    <h1 style="letter-spacing: 4px; color: gold;">КАБІНЕТ РИБАЛКИ</h1>
-    <div style="font-size: 72px; color: white; margin: 40px 0; font-weight: 900; text-shadow: 0 0 20px rgba(255,255,255,0.2);">
+    <div id="user-photo" class="profile-avatar"></div>
+    <div id="user-nick" class="user-name">ГРАВЕЦЬ</div>
+    <div style="font-size: 48px; color: white; margin: 10px 0; font-weight: 900; text-shadow: 0 0 20px rgba(255,255,255,0.2);">
         <span id="bal-prof">1050</span> <span style="font-size: 24px; color: gold;">🐟🪙</span>
     </div>
     
     <div class="paytable">
         <h3 style="text-align: center; color: gold;">ШАНСИ ТА ВИПЛАТИ</h3>
         <div class="pay-row"><span>🎰 КАЗІНО БОНУС (1%)</span> <span>???</span></div>
-        <div class="pay-row"><span>💎 ДІАМАНТ (0.5%)</span> <span>x500</span></div>
+        <div class="pay-row"><span>💎 ДІАМАНТ (0.2%)</span> <span>x500</span></div>
         <div class="pay-row"><span>🐋 КИТ (0.1%)</span> <span>x300</span></div>
-        <div class="pay-row"><span>🦈 АКУЛА (0.5%)</span> <span>x100</span></div>
-        <div class="pay-row"><span>🐬 ДЕЛЬФІН (1.5%)</span> <span>x50</span></div>
-        <div class="pay-row"><span>🦞 ЛОБСТЕР (2.0%)</span> <span>x20</span></div>
-        <div class="pay-row"><span>🦑 КАЛЬМАР (4.0%)</span> <span>x10</span></div>
-        <div class="pay-row"><span>🦀 КРАБ / 🪼 МЕДУЗА (8.0%)</span> <span>x5</span></div>
-        <div class="pay-row"><span>🐠 ТРОПІЧНА РИБА (15.0%)</span> <span>x2</span></div>
-        <div class="pay-row"><span>🐟 ЗВИЧАЙНА РИБА (25.0%)</span> <span>x1</span></div>
-        <div class="pay-row"><span>🩲 ЧЕРЕВИК (42.4%)</span> <span>x0</span></div>
+        <div class="pay-row"><span>🦈 АКУЛА (0.3%)</span> <span>x100</span></div>
+        <div class="pay-row"><span>🐬 ДЕЛЬФІН (0.5%)</span> <span>x50</span></div>
+        <div class="pay-row"><span>🦞 ЛОБСТЕР (1.0%)</span> <span>x20</span></div>
+        <div class="pay-row"><span>🦑 КАЛЬМАР (2.0%)</span> <span>x10</span></div>
+        <div class="pay-row"><span>🦀 КРАБ / 🪼 МЕДУЗА (5.0%)</span> <span>x5</span></div>
+        <div class="pay-row"><span>🐠 ТРОПІЧНА РИБА (12.0%)</span> <span>x2</span></div>
+        <div class="pay-row"><span>🐟 ЗВИЧАЙНА РИБА (18.0%)</span> <span>x1</span></div>
+        <div class="pay-row"><span>🩲 ЧЕРЕВИК / СМІТТЯ (60.9%)</span> <span>x0</span></div>
     </div>
 
-    <button class="menu-btn btn-gold" onclick="tg.showAlert('Поповнення скоро!')">ПОПОВНИТИ</button>
-    <button class="menu-btn btn-dark" onclick="tg.showAlert('Вивід монет активовано!')">ВИВЕСТИ 🎁</button>
+    <button class="menu-btn btn-gold" onclick="requestDeposit()">ПОПОВНИТИ</button>
+    <button class="menu-btn btn-dark" onclick="requestWithdraw()">ВИВЕСТИ 🎁</button>
     <button class="menu-btn btn-red" onclick="toggleProfile(false)">НАЗАД</button>
 </div>
 
@@ -104,6 +107,22 @@
     let gameState = 'idle';
     let combo = 0;
     let jackpot = 50055;
+
+    // Створюємо аудіо контекст для вібруючого звуку клювання
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBiteSound() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(40, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x00ccff); 
@@ -155,25 +174,26 @@
     bridgeGroup.position.y = -1.8;
     scene.add(bridgeGroup);
 
-    // --- ОНОВЛЕНІ РУКИ (ЗВЕДЕНІ ДО ВУДКИ) ---
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.7 });
-    const armGeo = new THREE.CylinderGeometry(0.12, 0.15, 1.8);
+    // --- ПОКРАЩЕНІ РУКИ (ЗАСМАГЛІ, ТРИМАЮТЬ ВУДКУ) ---
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0x8d5524, roughness: 0.8 }); // Колір засмаги
+    const armGeo = new THREE.CylinderGeometry(0.12, 0.18, 2.2);
     
     const leftArmGroup = new THREE.Group();
     const leftArm = new THREE.Mesh(armGeo, skinMat);
+    leftArm.position.y = 1.1;
     leftArmGroup.add(leftArm);
-    leftArmGroup.position.set(-0.5, 0.2, 0); 
-    leftArmGroup.rotation.set(-1.1, 0.8, 0); 
+    leftArmGroup.position.set(-0.4, -0.5, 6.5); 
+    leftArmGroup.rotation.set(-1.0, 0.5, 0.2); 
 
     const rightArmGroup = new THREE.Group();
     const rightArm = new THREE.Mesh(armGeo, skinMat);
+    rightArm.position.y = 1.1;
     rightArmGroup.add(rightArm);
-    rightArmGroup.position.set(0.5, 0.2, 0);
-    rightArmGroup.rotation.set(-1.1, -0.8, 0);
+    rightArmGroup.position.set(0.4, -0.5, 6.5);
+    rightArmGroup.rotation.set(-1.0, -0.5, -0.2);
 
     const fishermanBody = new THREE.Group();
     fishermanBody.add(leftArmGroup, rightArmGroup);
-    fishermanBody.position.set(0, -1.0, 5.0); 
     scene.add(fishermanBody);
 
     const rodGroup = new THREE.Group();
@@ -223,15 +243,35 @@
         });
         const idleSway = Math.sin(time) * 0.02;
         finalRod.position.y = -0.6 + idleSway;
-        fishermanBody.position.y = -1.0 + idleSway;
+        fishermanBody.position.y = idleSway;
         if (gameState === 'biting') {
             float.position.y -= 0.5;
-            finalRod.rotation.x = -Math.PI / 3.5 + Math.sin(time * 30) * 0.07;
+            finalRod.rotation.x = -Math.PI / 3.5 + Math.sin(time * 35) * 0.08;
+            if (Math.random() > 0.9) playBiteSound();
         }
         renderer.render(scene, camera);
     }
     
-    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1200);
+    function initTelegramUser() {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            document.getElementById('user-nick').innerText = user.first_name + (user.last_name ? " " + user.last_name : "");
+            if (user.photo_url) {
+                document.getElementById('user-photo').style.backgroundImage = `url('${user.photo_url}')`;
+            } else {
+                document.getElementById('user-photo').innerText = "🎣";
+                document.getElementById('user-photo').style.display = "flex";
+                document.getElementById('user-photo').style.alignItems = "center";
+                document.getElementById('user-photo').style.justifyContent = "center";
+                document.getElementById('user-photo').style.fontSize = "40px";
+            }
+        }
+    }
+
+    setTimeout(() => { 
+        document.getElementById('loading').style.display = 'none'; 
+        initTelegramUser();
+    }, 1200);
     animate();
 
     function updateUI() {
@@ -239,6 +279,18 @@
         document.getElementById('bal-prof').innerText = balance.toLocaleString();
         jackpot += Math.floor(Math.random()*3);
         document.getElementById('jackpot-hud').innerText = `JACKPOT: ${jackpot.toLocaleString()} 🐟🪙`;
+    }
+
+    function requestDeposit() {
+        tg.showConfirm("Перейти до оплати через Telegram Stars?");
+    }
+
+    function requestWithdraw() {
+        tg.showPopup({
+            title: 'Вивід коштів',
+            message: 'Мінімальна сума для виводу: 5000 🐟🪙. Введіть номер карти у чат боту.',
+            buttons: [{type: 'ok'}]
+        });
     }
 
     function runCasino() {
@@ -258,14 +310,16 @@
             s2.innerText = symbols[Math.floor(Math.random()*symbols.length)];
             s3.innerText = symbols[Math.floor(Math.random()*symbols.length)];
             iters++;
-            if(iters > 20) {
+            if(iters > 25) {
                 clearInterval(interval);
-                if(s1.innerText === s2.innerText && s2.innerText === s3.innerText) {
-                    let win = 2500; // x5 від ставки 500 або спец бонус
+                // Шанс на джекпот у казино дуже малий
+                if(Math.random() > 0.95) {
+                    s1.innerText = '💎'; s2.innerText = '💎'; s3.innerText = '💎';
+                    let win = 5000;
                     balance += win;
-                    resDiv.innerHTML = `<span style="color:lime">ПЕРЕМОГА! +${win}</span>`;
+                    resDiv.innerHTML = `<span style="color:lime">JACKPOT! +${win}</span>`;
                 } else {
-                    resDiv.innerText = "СПРОБУЙ ЩЕ!";
+                    resDiv.innerText = "МАЙЖЕ! СПРОБУЙ ЩЕ!";
                 }
                 setTimeout(() => { overlay.style.display = 'none'; updateUI(); }, 2500);
             }
@@ -285,38 +339,40 @@
                 gameState = 'biting';
                 btn.disabled = false; btn.innerText = "ПІДСІКАЙ!";
                 tg.HapticFeedback.notificationOccurred('warning');
-            }, Math.random() * 5000 + 2000);
+            }, Math.random() * 4000 + 1500);
         } else if (gameState === 'biting') {
             gameState = 'result'; btn.style.display = 'none';
             const roll = Math.random() * 100;
             let res = { e: '🩲', m: 0 }; 
 
-            if (roll > 99.5) res = { e: '💎', m: 500 };
+            // КОРЕКЦІЯ ШАНСІВ: Казино завжди в плюсі (Математичне очікування < 1)
+            if (roll > 99.8) res = { e: '💎', m: 500 };
             else if (roll > 99.0) { gameState = 'casino'; runCasino(); res = { e: '🎰', m: 0 }; }
             else if (roll > 98.9) res = { e: '🐋', m: 300 };
-            else if (roll > 98.4) res = { e: '🦈', m: 100 };
-            else if (roll > 96.9) res = { e: '🐬', m: 50 };
-            else if (roll > 94.9) res = { e: '🦞', m: 20 };
-            else if (roll > 90.9) res = { e: '🦑', m: 10 };
-            else if (roll > 82.9) res = { e: Math.random() > 0.5 ? '🦀' : '🪼', m: 5 };
-            else if (roll > 67.9) res = { e: '🐠', m: 2 };
-            else if (roll > 42.9) res = { e: '🐟', m: 1 };
+            else if (roll > 98.6) res = { e: '🦈', m: 100 };
+            else if (roll > 98.1) res = { e: '🐬', m: 50 };
+            else if (roll > 97.1) res = { e: '🦞', m: 20 };
+            else if (roll > 95.1) res = { e: '🦑', m: 10 };
+            else if (roll > 90.1) res = { e: Math.random() > 0.5 ? '🦀' : '🪼', m: 5 };
+            else if (roll > 78.1) res = { e: '🐠', m: 2 };
+            else if (roll > 60.1) res = { e: '🐟', m: 1 };
+            // 60% шанс на сміття або невдачу (база)
 
             if(res.e !== '🎰') {
                 let win = Math.floor(50 * res.m);
                 balance += win;
                 fishWrap.innerHTML = `${res.e}<br><span class="profit-text">+${win}</span>`;
                 fishWrap.style.transform = "translate(-50%, -50%) scale(1)";
+                tg.HapticFeedback.impactOccurred('heavy');
                 setTimeout(() => {
                     fishWrap.style.transform = "translate(-50%, -50%) scale(0)";
                     btn.style.display = 'inline-block';
                     btn.innerText = "Закинути вудку";
                     gameState = 'idle'; updateUI();
-                }, 3000);
+                }, 2500);
             } else {
                 btn.style.display = 'inline-block';
                 btn.innerText = "Закинути вудку";
-                gameState = 'idle';
             }
         }
     }
